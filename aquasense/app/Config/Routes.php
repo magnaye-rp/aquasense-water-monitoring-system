@@ -3,6 +3,7 @@
 use App\Controllers\ApiController;
 use App\Controllers\DashboardController;
 use App\Controllers\AuthController;
+use App\Controllers\TestController;
 
 $routes->get('/', function() {
     return redirect()->to('/login');
@@ -41,4 +42,14 @@ $routes->group('dashboard', ['filter' => 'session'], function($routes) {
     $routes->post('control-device', [DashboardController::class, 'controlDevice']);
     $routes->get('get-current-data', [DashboardController::class, 'getCurrentData']);
     $routes->get('delete-alert/(:num)', [DashboardController::class, 'deleteAlert']);
+    $routes->post('test-control', [DashboardController::class, 'testControl']);
+
 });
+
+// Test routes
+$routes->get('test', [TestController::class, 'index']);
+$routes->get('test-db', [TestController::class, 'dbTest']);
+
+// API test routes
+$routes->post('api/test', [ApiController::class, 'test']);
+$routes->get('api/test-command', [ApiController::class, 'testCommand']);

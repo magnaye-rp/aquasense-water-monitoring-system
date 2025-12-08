@@ -4,6 +4,7 @@ namespace App\Controllers;
 
 use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RedirectResponse;
+use CodeIgniter\Shield\Entities\User;
 
 class AuthController extends Controller
 {
@@ -87,31 +88,36 @@ class AuthController extends Controller
             return redirect()->back()->withInput()->with('errors', $validation->getErrors());
         }
 
-        // Create user
+        // Create user using Shield's User entity
         $users = auth()->getProvider();
         
-        $user = new \App\Entities\User([
+        $user = new User([
             'username' => $this->request->getPost('username'),
             'active'   => 1
         ]);
 
         // Save user with identity
-        $users->save($user);
-        
-        // Add email/password identity
-        $users->saveIdentity($user, [
-            'type' => 'email_password',
-            'secret' => $this->request->getPost('email'),
-            'secret2' => service('passwords')->hash($this->request->getPost('password'))
-        ]);
+        try {
+            $users->save($user);
+            
+            // Add email/password identity
+            $users->saveIdentity($user, [
+                'type' => 'email_password',
+                'secret' => $this->request->getPost('email'),
+                'secret2' => service('passwords')->hash($this->request->getPost('password'))
+            ]);
 
-        // Add to admin group (you can change this as needed)
-        $user->addGroup('admin');
+            // Add to admin group (you can change this as needed)
+            $user->addGroup('admin');
 
-        // Auto login after registration
-        auth()->login($user);
+            // Auto login after registration
+            auth()->login($user);
 
-        return redirect()->to('/dashboard')->with('success', 'Registration successful! Welcome to AquaSense.');
+            return redirect()->to('/dashboard')->with('success', 'Registration successful! Welcome to AquaSense.');
+            
+        } catch (\Exception $e) {
+            return redirect()->back()->withInput()->with('error', 'Registration failed: ' . $e->getMessage());
+        }
     }
 
     public function logout()
@@ -147,12 +153,7 @@ class AuthController extends Controller
         }
 
         $email = $this->request->getPost('email');
-        
-        // In a real application, you would:
-        // 1. Generate a reset token
-        // 2. Save it to database
-        // 3. Send email with reset link
-        // For now, just show a success message
+    
         
         return redirect()->to('/login')->with('success', 'If an account exists with that email, a password reset link has been sent.');
     }

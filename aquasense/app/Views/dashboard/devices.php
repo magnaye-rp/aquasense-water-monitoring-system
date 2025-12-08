@@ -3,6 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="csrf-token" content="<?= csrf_hash() ?>">
     <title><?= $title ?></title>
     <!-- Bootstrap 5 -->
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/css/bootstrap.min.css" rel="stylesheet">
@@ -24,75 +25,58 @@
         }
         .device-card {
             transition: all 0.3s;
-            cursor: pointer;
-        }
-        .device-card:hover {
-            transform: translateY(-5px);
-            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
         }
         .device-on {
             border-left: 5px solid #198754;
+            background-color: rgba(25, 135, 84, 0.05);
         }
         .device-off {
             border-left: 5px solid #dc3545;
+            background-color: rgba(220, 53, 69, 0.05);
         }
         .status-badge {
             padding: 5px 15px;
             border-radius: 20px;
             font-weight: 500;
         }
-        .switch {
-            position: relative;
-            display: inline-block;
-            width: 60px;
-            height: 34px;
+        .control-btn {
+            min-width: 120px;
+            font-weight: 500;
+            transition: all 0.3s;
         }
-        .switch input {
-            opacity: 0;
-            width: 0;
-            height: 0;
-        }
-        .slider {
-            position: absolute;
-            cursor: pointer;
-            top: 0;
-            left: 0;
-            right: 0;
-            bottom: 0;
-            background-color: #ccc;
-            transition: .4s;
-            border-radius: 34px;
-        }
-        .slider:before {
-            position: absolute;
-            content: "";
-            height: 26px;
-            width: 26px;
-            left: 4px;
-            bottom: 4px;
-            background-color: white;
-            transition: .4s;
-            border-radius: 50%;
-        }
-        input:checked + .slider {
-            background-color: #198754;
-        }
-        input:checked + .slider:before {
-            transform: translateX(26px);
+        .control-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
         }
         .table th {
             border-top: none;
             font-weight: 600;
         }
-        .manual-badge {
-            background-color: #0dcaf0;
-        }
         .auto-badge {
             background-color: #198754;
         }
-        .mode-toggle {
-            border-radius: 20px;
-            padding: 8px 20px;
+        .manual-badge {
+            background-color: #0dcaf0;
+        }
+        .alert-fixed {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            z-index: 9999;
+            min-width: 300px;
+        }
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 2px solid #f3f3f3;
+            border-top: 2px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
         }
     </style>
 </head>
@@ -104,50 +88,6 @@
                 <i class="fas fa-tint text-primary me-2"></i>
                 AquaSense
             </a>
-            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
-                <span class="navbar-toggler-icon"></span>
-            </button>
-            <div class="collapse navbar-collapse" id="navbarNav">
-                <ul class="navbar-nav me-auto">
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('dashboard') ?>">
-                            <i class="fas fa-home me-1"></i> Dashboard
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('dashboard/sensor-data') ?>">
-                            <i class="fas fa-chart-line me-1"></i> Sensor Data
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('dashboard/alerts') ?>">
-                            <i class="fas fa-bell me-1"></i> Alerts
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link active" href="<?= base_url('dashboard/devices') ?>">
-                            <i class="fas fa-cogs me-1"></i> Device Control
-                        </a>
-                    </li>
-                    <li class="nav-item">
-                        <a class="nav-link" href="<?= base_url('dashboard/settings') ?>">
-                            <i class="fas fa-sliders-h me-1"></i> Settings
-                        </a>
-                    </li>
-                </ul>
-                <div class="navbar-nav">
-                    <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-1"></i> <?= $user->username ?? 'User' ?>
-                        </a>
-                        <ul class="dropdown-menu">
-                            <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
-                            <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
-                        </ul>
-                    </div>
-                </div>
-            </div>
         </div>
     </nav>
 
@@ -157,8 +97,8 @@
         <div class="row mb-4">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-success text-white">
-                        <i class="fas fa-plug me-2"></i> Current Device Status
+                    <div class="card-header bg-primary text-white">
+                        <i class="fas fa-plug me-2"></i> Device Control
                     </div>
                     <div class="card-body">
                         <div class="row">
@@ -167,40 +107,51 @@
                                 <div class="card device-card h-100 <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'device-on' : 'device-off' ?>">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
-                                            <i class="fas fa-wind fa-2x me-3 <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'text-success' : 'text-secondary' ?>"></i>
-                                            <div>
+                                            <div class="me-3">
+                                                <i class="fas fa-wind fa-2x <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'text-success' : 'text-secondary' ?>"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
                                                 <h5 class="card-title mb-1">Oxygenator</h5>
                                                 <p class="card-text text-muted mb-0">
-                                                    <small>Last updated: <?= $currentStatus['oxygenator']['last_updated'] ? date('M d, H:i', strtotime($currentStatus['oxygenator']['last_updated'])) : 'Never' ?></small>
+                                                    <small>
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        <?= $currentStatus['oxygenator']['last_updated'] ? 
+                                                            date('M d, H:i', strtotime($currentStatus['oxygenator']['last_updated'])) : 
+                                                            'Never updated' ?>
+                                                    </small>
                                                 </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'bg-success' : 'bg-danger' ?> status-badge">
+                                                    <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'ON' : 'OFF' ?>
+                                                </span>
                                             </div>
                                         </div>
                                         
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div>
-                                                <span class="badge <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'bg-success' : 'bg-danger' ?> status-badge">
-                                                    <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'ACTIVE' : 'INACTIVE' ?>
+                                            <small class="text-muted">
+                                                Mode: 
+                                                <span class="badge <?= $settings['oxygenator_auto'] == 1 ? 'auto-badge' : 'manual-badge' ?>">
+                                                    <?= $settings['oxygenator_auto'] == 1 ? 'Auto' : 'Manual' ?>
                                                 </span>
-                                                <span class="badge <?= $currentStatus['oxygenator']['triggered_by'] == 'manual' ? 'manual-badge' : 'auto-badge' ?> ms-2">
-                                                    <?= strtoupper($currentStatus['oxygenator']['triggered_by'] ?? 'UNKNOWN') ?>
-                                                </span>
-                                            </div>
-                                            <label class="switch">
-                                                <input type="checkbox" 
-                                                       id="oxyToggle" 
-                                                       <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
-                                                       onchange="toggleDevice('oxygenator', this.checked)">
-                                                <span class="slider"></span>
-                                            </label>
+                                            </small>
                                         </div>
                                         
-                                        <div class="d-grid gap-2">
-                                            <button class="btn btn-success" onclick="controlDevice('oxygenator', 'on')">
-                                                <i class="fas fa-play me-2"></i> Turn ON
-                                            </button>
-                                            <button class="btn btn-danger" onclick="controlDevice('oxygenator', 'off')">
-                                                <i class="fas fa-stop me-2"></i> Turn OFF
-                                            </button>
+                                        <!-- Single Toggle Button -->
+                                        <div class="d-grid">
+                                            <?php if ($currentStatus['oxygenator']['state'] == 'ON'): ?>
+                                                <button class="btn btn-danger control-btn" 
+                                                        onclick="controlDevice('oxygenator', 'off')"
+                                                        id="oxyBtn">
+                                                    <i class="fas fa-power-off me-2"></i> Turn OFF
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn btn-success control-btn" 
+                                                        onclick="controlDevice('oxygenator', 'on')"
+                                                        id="oxyBtn">
+                                                    <i class="fas fa-power-off me-2"></i> Turn ON
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
@@ -211,74 +162,67 @@
                                 <div class="card device-card h-100 <?= $currentStatus['water_pump']['state'] == 'ON' ? 'device-on' : 'device-off' ?>">
                                     <div class="card-body">
                                         <div class="d-flex align-items-center mb-3">
-                                            <i class="fas fa-tint fa-2x me-3 <?= $currentStatus['water_pump']['state'] == 'ON' ? 'text-success' : 'text-secondary' ?>"></i>
-                                            <div>
+                                            <div class="me-3">
+                                                <i class="fas fa-tint fa-2x <?= $currentStatus['water_pump']['state'] == 'ON' ? 'text-success' : 'text-secondary' ?>"></i>
+                                            </div>
+                                            <div class="flex-grow-1">
                                                 <h5 class="card-title mb-1">Water Pump</h5>
                                                 <p class="card-text text-muted mb-0">
-                                                    <small>Last updated: <?= $currentStatus['water_pump']['last_updated'] ? date('M d, H:i', strtotime($currentStatus['water_pump']['last_updated'])) : 'Never' ?></small>
+                                                    <small>
+                                                        <i class="fas fa-clock me-1"></i>
+                                                        <?= $currentStatus['water_pump']['last_updated'] ? 
+                                                            date('M d, H:i', strtotime($currentStatus['water_pump']['last_updated'])) : 
+                                                            'Never updated' ?>
+                                                    </small>
                                                 </p>
+                                            </div>
+                                            <div class="text-end">
+                                                <span class="badge <?= $currentStatus['water_pump']['state'] == 'ON' ? 'bg-success' : 'bg-danger' ?> status-badge">
+                                                    <?= $currentStatus['water_pump']['state'] == 'ON' ? 'ON' : 'OFF' ?>
+                                                </span>
                                             </div>
                                         </div>
                                         
                                         <div class="d-flex justify-content-between align-items-center mb-3">
-                                            <div>
-                                                <span class="badge <?= $currentStatus['water_pump']['state'] == 'ON' ? 'bg-success' : 'bg-danger' ?> status-badge">
-                                                    <?= $currentStatus['water_pump']['state'] == 'ON' ? 'ACTIVE' : 'INACTIVE' ?>
+                                            <small class="text-muted">
+                                                Mode: 
+                                                <span class="badge <?= $settings['pump_auto'] == 1 ? 'auto-badge' : 'manual-badge' ?>">
+                                                    <?= $settings['pump_auto'] == 1 ? 'Auto' : 'Manual' ?>
                                                 </span>
-                                                <span class="badge <?= $currentStatus['water_pump']['triggered_by'] == 'manual' ? 'manual-badge' : 'auto-badge' ?> ms-2">
-                                                    <?= strtoupper($currentStatus['water_pump']['triggered_by'] ?? 'UNKNOWN') ?>
-                                                </span>
-                                            </div>
-                                            <label class="switch">
-                                                <input type="checkbox" 
-                                                       id="pumpToggle" 
-                                                       <?= $currentStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
-                                                       onchange="toggleDevice('water_pump', this.checked)">
-                                                <span class="slider"></span>
-                                            </label>
+                                            </small>
                                         </div>
                                         
-                                        <div class="d-grid gap-2">
-                                            <button class="btn btn-success" onclick="controlDevice('water_pump', 'on')">
-                                                <i class="fas fa-play me-2"></i> Turn ON
-                                            </button>
-                                            <button class="btn btn-danger" onclick="controlDevice('water_pump', 'off')">
-                                                <i class="fas fa-stop me-2"></i> Turn OFF
-                                            </button>
+                                        <!-- Single Toggle Button -->
+                                        <div class="d-grid">
+                                            <?php if ($currentStatus['water_pump']['state'] == 'ON'): ?>
+                                                <button class="btn btn-danger control-btn" 
+                                                        onclick="controlDevice('water_pump', 'off')"
+                                                        id="pumpBtn">
+                                                    <i class="fas fa-power-off me-2"></i> Turn OFF
+                                                </button>
+                                            <?php else: ?>
+                                                <button class="btn btn-success control-btn" 
+                                                        onclick="controlDevice('water_pump', 'on')"
+                                                        id="pumpBtn">
+                                                    <i class="fas fa-power-off me-2"></i> Turn ON
+                                                </button>
+                                            <?php endif; ?>
                                         </div>
                                     </div>
                                 </div>
                             </div>
                         </div>
                         
-                        <!-- Control Modes -->
+                        <!-- Quick Actions -->
                         <div class="row mt-3">
                             <div class="col-12">
                                 <div class="d-flex justify-content-center">
-                                    <div class="btn-group" role="group">
-                                        <button type="button" 
-                                                class="btn <?= $settings['oxygenator_auto'] == 1 ? 'btn-primary' : 'btn-outline-primary' ?> mode-toggle"
-                                                onclick="setAutoMode('oxygenator', true)">
-                                            <i class="fas fa-robot me-2"></i> Auto Mode
-                                        </button>
-                                        <button type="button" 
-                                                class="btn <?= $settings['oxygenator_auto'] == 0 ? 'btn-primary' : 'btn-outline-primary' ?> mode-toggle"
-                                                onclick="setAutoMode('oxygenator', false)">
-                                            <i class="fas fa-hand-pointer me-2"></i> Manual Mode
-                                        </button>
-                                    </div>
-                                    <div class="btn-group ms-3" role="group">
-                                        <button type="button" 
-                                                class="btn <?= $settings['pump_auto'] == 1 ? 'btn-primary' : 'btn-outline-primary' ?> mode-toggle"
-                                                onclick="setAutoMode('pump', true)">
-                                            <i class="fas fa-robot me-2"></i> Auto Mode
-                                        </button>
-                                        <button type="button" 
-                                                class="btn <?= $settings['pump_auto'] == 0 ? 'btn-primary' : 'btn-outline-primary' ?> mode-toggle"
-                                                onclick="setAutoMode('pump', false)">
-                                            <i class="fas fa-hand-pointer me-2"></i> Manual Mode
-                                        </button>
-                                    </div>
+                                    <button class="btn btn-outline-primary me-2" onclick="controlBoth('on')">
+                                        <i class="fas fa-play me-2"></i> Turn Both ON
+                                    </button>
+                                    <button class="btn btn-outline-danger" onclick="controlBoth('off')">
+                                        <i class="fas fa-stop me-2"></i> Turn Both OFF
+                                    </button>
                                 </div>
                             </div>
                         </div>
@@ -287,44 +231,36 @@
             </div>
         </div>
 
-        <!-- Device Logs -->
+        <!-- Recent Activity -->
         <div class="row">
             <div class="col-12">
                 <div class="card">
-                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
-                        <div>
-                            <i class="fas fa-history me-2"></i> Device Activity Logs
-                        </div>
-                        <button class="btn btn-light btn-sm" onclick="refreshLogs()">
-                            <i class="fas fa-sync-alt me-1"></i> Refresh
-                        </button>
+                    <div class="card-header bg-dark text-white">
+                        <i class="fas fa-history me-2"></i> Recent Activity
                     </div>
                     <div class="card-body">
                         <?php if (empty($deviceHistory)): ?>
                             <div class="text-center py-4 text-muted">
                                 <i class="fas fa-history fa-2x mb-3"></i>
-                                <p class="mb-0">No device activity logs found</p>
+                                <p class="mb-0">No recent activity</p>
                             </div>
                         <?php else: ?>
                             <div class="table-responsive">
-                                <table class="table table-hover">
+                                <table class="table table-hover table-sm">
                                     <thead>
                                         <tr>
-                                            <th>Timestamp</th>
+                                            <th>Time</th>
                                             <th>Device</th>
                                             <th>Action</th>
-                                            <th>Triggered By</th>
-                                            <th>Status</th>
+                                            <th>By</th>
                                         </tr>
                                     </thead>
                                     <tbody>
                                         <?php foreach ($deviceHistory as $log): ?>
                                             <tr>
-                                                <td><?= date('M d, H:i:s', strtotime($log['created_at'])) ?></td>
+                                                <td><?= date('H:i:s', strtotime($log['created_at'])) ?></td>
                                                 <td>
-                                                    <span class="badge <?= $log['device_name'] == 'oxygenator' ? 'bg-info' : 'bg-primary' ?>">
-                                                        <?= ucfirst(str_replace('_', ' ', $log['device_name'])) ?>
-                                                    </span>
+                                                    <?= ucfirst(str_replace('_', ' ', $log['device_name'])) ?>
                                                 </td>
                                                 <td>
                                                     <span class="badge <?= $log['action'] == 'ON' ? 'bg-success' : 'bg-danger' ?>">
@@ -336,32 +272,11 @@
                                                         <?= ucfirst($log['triggered_by']) ?>
                                                     </span>
                                                 </td>
-                                                <td>
-                                                    <?php
-                                                    $timeAgo = time() - strtotime($log['created_at']);
-                                                    if ($timeAgo < 60) {
-                                                        echo 'Just now';
-                                                    } elseif ($timeAgo < 3600) {
-                                                        echo floor($timeAgo / 60) . ' minutes ago';
-                                                    } elseif ($timeAgo < 86400) {
-                                                        echo floor($timeAgo / 3600) . ' hours ago';
-                                                    } else {
-                                                        echo floor($timeAgo / 86400) . ' days ago';
-                                                    }
-                                                    ?>
-                                                </td>
                                             </tr>
                                         <?php endforeach; ?>
                                     </tbody>
                                 </table>
                             </div>
-                            
-                            <!-- Pagination -->
-                            <?php if ($pager->getPageCount() > 1): ?>
-                                <nav aria-label="Page navigation" class="mt-3">
-                                    <?= $pager->links() ?>
-                                </nav>
-                            <?php endif; ?>
                         <?php endif; ?>
                     </div>
                 </div>
@@ -371,123 +286,140 @@
 
     <!-- Bootstrap JS -->
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
     <script>
-        // Device control functions
-        function toggleDevice(device, state) {
-            const action = state ? 'on' : 'off';
-            controlDevice(device, action);
-        }
-
-        function controlDevice(device, action) {
-            if (!confirm(`Are you sure you want to turn ${device} ${action}?`)) {
-                // Reset toggle if cancelled
-                if (device === 'oxygenator') {
-                    $('#oxyToggle').prop('checked', !$('#oxyToggle').prop('checked'));
-                } else {
-                    $('#pumpToggle').prop('checked', !$('#pumpToggle').prop('checked'));
-                }
-                return;
-            }
-
-            $.ajax({
-                url: '<?= base_url("dashboard/control-device") ?>',
-                method: 'POST',
-                data: {
-                    device: device,
-                    action: action,
-                    csrf_test_name: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert(response.message);
-                        // Update UI
-                        const badge = device === 'oxygenator' ? 
-                            $('#oxyToggle').closest('.device-card').find('.status-badge') :
-                            $('#pumpToggle').closest('.device-card').find('.status-badge');
-                        
-                        badge.removeClass('bg-success bg-danger')
-                             .addClass(action === 'on' ? 'bg-success' : 'bg-danger')
-                             .text(action === 'on' ? 'ACTIVE' : 'INACTIVE');
-                        
-                        // Update card border
-                        const card = device === 'oxygenator' ? 
-                            $('#oxyToggle').closest('.device-card') :
-                            $('#pumpToggle').closest('.device-card');
-                        
-                        card.removeClass('device-on device-off')
-                            .addClass(action === 'on' ? 'device-on' : 'device-off');
-                        
-                        // Update icon color
-                        const icon = card.find('.fa-2x');
-                        icon.removeClass('text-success text-secondary')
-                            .addClass(action === 'on' ? 'text-success' : 'text-secondary');
-                    } else {
-                        alert('Error: ' + response.message);
-                        // Reset toggle on error
-                        if (device === 'oxygenator') {
-                            $('#oxyToggle').prop('checked', !$('#oxyToggle').prop('checked'));
-                        } else {
-                            $('#pumpToggle').prop('checked', !$('#pumpToggle').prop('checked'));
-                        }
-                    }
-                },
-                error: function() {
-                    alert('Error controlling device. Please try again.');
-                    // Reset toggle on error
-                    if (device === 'oxygenator') {
-                        $('#oxyToggle').prop('checked', !$('#oxyToggle').prop('checked'));
-                    } else {
-                        $('#pumpToggle').prop('checked', !$('#pumpToggle').prop('checked'));
-                    }
-                }
-            });
-        }
-
-        function setAutoMode(device, autoMode) {
-            const mode = autoMode ? 'auto' : 'manual';
-            const deviceType = device === 'oxygenator' ? 'oxygenator_auto' : 'pump_auto';
-            const value = autoMode ? 1 : 0;
+        // Device control functions - SIMPLIFIED
+        async function controlDevice(device, action) {
+            const button = document.getElementById(device === 'oxygenator' ? 'oxyBtn' : 'pumpBtn');
+            const originalText = button.innerHTML;
             
-            $.ajax({
-                url: '<?= base_url("dashboard/update-settings") ?>',
-                method: 'POST',
-                data: {
-                    [deviceType]: value,
-                    csrf_test_name: $('meta[name="csrf-token"]').attr('content')
-                },
-                success: function(response) {
-                    if (response.success) {
-                        alert(`${device.charAt(0).toUpperCase() + device.slice(1)} mode set to ${mode}`);
-                        // Update button styles
-                        $(`button:contains("Auto Mode")`).each(function() {
-                            if ($(this).text().includes('Auto') && $(this).closest('.btn-group').find('button').index($(this)) === 0) {
-                                $(this).removeClass('btn-outline-primary btn-primary')
-                                       .addClass(autoMode ? 'btn-primary' : 'btn-outline-primary');
-                                $(this).next('button').removeClass('btn-outline-primary btn-primary')
-                                       .addClass(!autoMode ? 'btn-primary' : 'btn-outline-primary');
-                            }
-                        });
-                    } else {
-                        alert('Error: ' + response.message);
-                    }
-                },
-                error: function() {
-                    alert('Error updating mode');
+            console.log(`Controlling ${device} to ${action}`);
+            
+            // Show loading
+            button.innerHTML = '<span class="loading-spinner me-2"></span> Processing...';
+            button.disabled = true;
+            
+            try {
+                const response = await fetch('<?= base_url("dashboard/control-device") ?>', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded'
+                    },
+                    body: new URLSearchParams({
+                        device: device,
+                        action: action
+                    })
+                });
+                
+                console.log('Response status:', response.status);
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
                 }
-            });
+                
+                const data = await response.json();
+                console.log('Response data:', data);
+                
+                if (data.success) {
+                    showAlert('success', data.message);
+                    // Update UI immediately
+                    updateButtonState(device, action === 'on');
+                    
+                    // Also refresh the page after 2 seconds to sync with Arduino
+                    setTimeout(() => {
+                        window.location.reload();
+                    }, 2000);
+                    
+                } else {
+                    throw new Error(data.message || 'Server returned error');
+                }
+                
+            } catch (error) {
+                console.error('Error:', error);
+                showAlert('error', error.message);
+                
+                // Restore button
+                button.innerHTML = originalText;
+                button.disabled = false;
+            }
         }
 
-        function refreshLogs() {
-            window.location.reload();
+        function updateButtonState(device, isOn) {
+            const button = document.getElementById(device === 'oxygenator' ? 'oxyBtn' : 'pumpBtn');
+            const card = button.closest('.device-card');
+            const badge = card.querySelector('.status-badge');
+            const icon = card.querySelector('.fa-wind, .fa-tint');
+            
+            if (isOn) {
+                // Change to OFF button
+                button.innerHTML = '<i class="fas fa-power-off me-2"></i> Turn OFF';
+                button.className = 'btn btn-danger control-btn';
+                button.onclick = () => controlDevice(device, 'off');
+                
+                // Update card style
+                card.classList.remove('device-off');
+                card.classList.add('device-on');
+                
+                // Update status badge
+                badge.className = 'badge bg-success status-badge';
+                badge.textContent = 'ON';
+                
+                // Update icon
+                if (icon) icon.classList.remove('text-secondary');
+                if (icon) icon.classList.add('text-success');
+                
+            } else {
+                // Change to ON button
+                button.innerHTML = '<i class="fas fa-power-off me-2"></i> Turn ON';
+                button.className = 'btn btn-success control-btn';
+                button.onclick = () => controlDevice(device, 'on');
+                
+                // Update card style
+                card.classList.remove('device-on');
+                card.classList.add('device-off');
+                
+                // Update status badge
+                badge.className = 'badge bg-danger status-badge';
+                badge.textContent = 'OFF';
+                
+                // Update icon
+                if (icon) icon.classList.remove('text-success');
+                if (icon) icon.classList.add('text-secondary');
+            }
+            
+            button.disabled = false;
+        }
+        function controlBoth(action) {
+            showAlert('info', `Turning both devices ${action.toUpperCase()}...`);
+
+            controlDevice('oxygenator', action);
+            setTimeout(() => {
+                controlDevice('water_pump', action);
+            }, 500);
         }
 
-        // Auto-refresh every 30 seconds
-        setInterval(function() {
-            refreshLogs();
-        }, 30000);
+        function showAlert(type, message) {
+            // Remove existing alerts
+            const existing = document.querySelector('.alert-fixed');
+            if (existing) existing.remove();
+            
+            // Create new alert
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show alert-fixed`;
+            alertDiv.innerHTML = `
+                <strong>${type === 'success' ? '✓' : '✗'}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 3 seconds
+            setTimeout(() => {
+                if (alertDiv.parentNode) {
+                    alertDiv.remove();
+                }
+            }, 3000);
+        }
     </script>
 </body>
 </html>

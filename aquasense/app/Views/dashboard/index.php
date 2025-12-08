@@ -552,26 +552,90 @@
 
         // Control device function
         function controlDevice(device, action) {
-            if (confirm(`Are you sure you want to turn ${device} ${action}?`)) {
-                $.ajax({
-                    url: '<?= base_url("dashboard/control-device") ?>',
-                    method: 'POST',
-                    data: {
-                        device: device,
-                        action: action
-                    },
-                    success: function(response) {
-                        if (response.success) {
-                            alert(response.message);
-                            refreshData();
-                        } else {
-                            alert('Error: ' + response.message);
-                        }
-                    },
-                    error: function() {
-                        alert('Error controlling device');
+            console.log(`Attempting to control: ${device} -> ${action}`);
+            
+            // Show loading
+            const button = event ? event.target.closest('button') : null;
+            if (button) {
+                const originalText = button.innerHTML;
+                button.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Processing...';
+                button.disabled = true;
+            }
+            
+            $.ajax({
+                url: '<?= base_url("dashboard/control-device") ?>',
+                method: 'POST',
+                data: {
+                    device: device,
+                    action: action,
+                    csrf_test_name: $('meta[name="csrf-token"]').attr('content')
+                },
+                success: function(response) {
+                    console.log('Server response:', response);
+                    
+                    if (response.success) {
+                        // Show success message
+                        showAlert('success', response.message);
+                        
+                        // Update UI
+                        updateDeviceUI(device, action);
+                        
+                        // Refresh data
+                        refreshData();
+                    } else {
+                        showAlert('error', 'Error: ' + response.message);
                     }
-                });
+                    
+                    // Restore button
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', error);
+                    showAlert('error', 'Network error. Check console for details.');
+                    
+                    // Restore button
+                    if (button) {
+                        button.innerHTML = originalText;
+                        button.disabled = false;
+                    }
+                }
+            });
+        }
+
+        function showAlert(type, message) {
+            // Create alert element
+            const alertDiv = document.createElement('div');
+            alertDiv.className = `alert alert-${type} alert-dismissible fade show position-fixed`;
+            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
+            alertDiv.innerHTML = `
+                <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
+                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
+            `;
+            
+            document.body.appendChild(alertDiv);
+            
+            // Auto remove after 5 seconds
+            setTimeout(() => {
+                alertDiv.remove();
+            }, 5000);
+        }
+
+        function updateDeviceUI(device, action) {
+            // Update switch state
+            const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
+            const switchElement = document.getElementById(switchId);
+            if (switchElement) {
+                switchElement.checked = action === 'on';
+            }
+            
+            // Update card appearance
+            const card = document.querySelector(`.device-card:contains(${device === 'oxygenator' ? 'Oxygenator' : 'Water Pump'})`);
+            if (card) {
+                card.classList.remove('device-on', 'device-off');
+                card.classList.add(action === 'on' ? 'device-on' : 'device-off');
             }
         }
 

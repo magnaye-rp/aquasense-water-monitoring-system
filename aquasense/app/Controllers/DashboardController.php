@@ -6,6 +6,7 @@ use App\Models\SensorReadingModel;
 use App\Models\AlertModel;
 use App\Models\DeviceLogModel;
 use App\Models\SystemSettingsModel;
+use App\Models\DeviceCommandModel;
 
 class DashboardController extends BaseController
 {
@@ -13,13 +14,19 @@ class DashboardController extends BaseController
     protected $alertModel;
     protected $deviceLogModel;
     protected $systemSettingsModel;
+        protected $commandModel; // Add this
+    protected $session; // Add this
 
+    
     public function __construct()
-    {
+    {    
+        $this->session = \Config\Services::session();
+        $this->commandModel = new \App\Models\DeviceCommandModel();
         $this->sensorReadingModel = new SensorReadingModel();
         $this->alertModel = new AlertModel();
         $this->deviceLogModel = new DeviceLogModel();
         $this->systemSettingsModel = new SystemSettingsModel();
+        
         
         // Require authentication
         if (!auth()->loggedIn()) {
@@ -197,35 +204,59 @@ class DashboardController extends BaseController
 
     public function controlDevice()
     {
-        if (!$this->request->isAJAX()) {
-            return $this->response->setJSON(['success' => false, 'message' => 'Invalid request']);
-        }
-
+        // Get POST data
         $device = $this->request->getPost('device');
         $action = $this->request->getPost('action');
-
+        
+        // Log for debugging
+        log_message('debug', 'Control device request: ' . print_r($this->request->getPost(), true));
+        
+        // Simple validation
+        if (!$device || !$action) {
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Missing device or action parameters'
+            ]);
+        }
+        
         if (!in_array($device, ['oxygenator', 'water_pump'])) {
             return $this->response->setJSON([
                 'success' => false,
-                'message' => 'Invalid device'
+                'message' => 'Invalid device name'
             ]);
         }
-
-        if (!in_array(strtolower($action), ['on', 'off'])) {
+        
+        if (!in_array($action, ['on', 'off'])) {
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Invalid action'
             ]);
         }
-
-        // Log the action
-        $this->deviceLogModel->logDeviceAction($device, $action, 'manual');
-
-        return $this->response->setJSON([
-            'success' => true,
-            'message' => "Device {$device} turned {$action}",
-            'action' => $action
-        ]);
+        
+        try {
+            // Load model
+            $commandModel = new \App\Models\DeviceCommandModel();
+            
+            // Add command to database
+            $commandId = $commandModel->addCommand($device, strtoupper($action), 'NODEMCU_AQUASENSE_001');
+            
+            log_message('debug', "Command added to database. ID: {$commandId}");
+            
+            // Return success response
+            return $this->response->setJSON([
+                'success' => true,
+                'message' => ucfirst($device) . ' turned ' . strtoupper($action) . ' successfully',
+                'command_id' => $commandId
+            ]);
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Failed to save command: ' . $e->getMessage());
+            
+            return $this->response->setJSON([
+                'success' => false,
+                'message' => 'Database error: ' . $e->getMessage()
+            ]);
+        }
     }
 
     public function getCurrentData()
@@ -309,19 +340,27 @@ class DashboardController extends BaseController
 
     private function getDeviceStatus()
     {
-        $oxygenator = $this->deviceLogModel->getCurrentState('oxygenator');
-        $waterPump = $this->deviceLogModel->getCurrentState('water_pump');
+        // Use the device command model instead of device logs
+        $commandModel = new \App\Models\DeviceCommandModel();
+        
+        // Get latest commands
+        $oxygenatorCommand = $commandModel->getCurrentCommand('oxygenator', 'NODEMCU_AQUASENSE_001');
+        $waterPumpCommand = $commandModel->getCurrentCommand('water_pump', 'NODEMCU_AQUASENSE_001');
+        
+        // Log for debugging
+        log_message('debug', 'Oxygenator command: ' . print_r($oxygenatorCommand, true));
+        log_message('debug', 'Water pump command: ' . print_r($waterPumpCommand, true));
         
         return [
             'oxygenator' => [
-                'state' => $oxygenator ? $oxygenator['action'] : 'OFF',
-                'last_updated' => $oxygenator ? $oxygenator['created_at'] : null,
-                'triggered_by' => $oxygenator ? $oxygenator['triggered_by'] : null
+                'state' => ($oxygenatorCommand && strtoupper($oxygenatorCommand['command']) === 'ON') ? 'ON' : 'OFF',
+                'last_updated' => $oxygenatorCommand ? $oxygenatorCommand['created_at'] : null,
+                'triggered_by' => 'manual'
             ],
             'water_pump' => [
-                'state' => $waterPump ? $waterPump['action'] : 'OFF',
-                'last_updated' => $waterPump ? $waterPump['created_at'] : null,
-                'triggered_by' => $waterPump ? $waterPump['triggered_by'] : null
+                'state' => ($waterPumpCommand && strtoupper($waterPumpCommand['command']) === 'ON') ? 'ON' : 'OFF',
+                'last_updated' => $waterPumpCommand ? $waterPumpCommand['created_at'] : null,
+                'triggered_by' => 'manual'
             ]
         ];
     }
@@ -349,5 +388,16 @@ class DashboardController extends BaseController
         }
 
         return $chartData;
+    }
+
+    // Temporary test method
+    public function testAjax()
+    {
+        // Simple test that always works
+        return $this->response->setJSON([
+            'success' => true,
+            'message' => 'AJAX test successful!',
+            'time' => date('Y-m-d H:i:s')
+        ]);
     }
 }
