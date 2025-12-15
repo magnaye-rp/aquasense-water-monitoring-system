@@ -235,9 +235,9 @@
                                 <div class="d-flex justify-content-center align-items-center mb-3">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" 
-                                               id="oxySwitch" <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
-                                               onchange="controlDevice('oxygenator', this.checked ? 'on' : 'off')"
-                                               style="width: 3em; height: 1.5em;">
+                                            id="oxySwitch" <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
+                                            onchange="controlDevice('oxygenator', this.checked ? 'on' : 'off')"
+                                            style="width: 3em; height: 1.5em;">
                                         <label class="form-check-label ms-2 fw-medium text-white" for="oxySwitch">
                                             <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'ON' : 'OFF' ?>
                                         </label>
@@ -267,9 +267,9 @@
                                 <div class="d-flex justify-content-center align-items-center mb-3">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" 
-                                               id="pumpSwitch" <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
-                                               onchange="controlDevice('water_pump', this.checked ? 'on' : 'off')"
-                                               style="width: 3em; height: 1.5em;">
+                                            id="pumpSwitch" <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
+                                            onchange="controlDevice('water_pump', this.checked ? 'on' : 'off')"
+                                            style="width: 3em; height: 1.5em;">
                                         <label class="form-check-label ms-2 fw-medium text-white" for="pumpSwitch">
                                             <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'ON' : 'OFF' ?>
                                         </label>
@@ -639,51 +639,6 @@ function updateDeviceStatus(deviceStatus) {
         .addClass(pumpState === 'ON' ? 'border-success' : 'border-secondary');
     $('#pumpSwitch').closest('.card').find('.fa-tint').removeClass('text-success text-secondary')
         .addClass(pumpState === 'ON' ? 'text-success' : 'text-secondary');
-}
-
-/* === DEVICE CONTROL === */
-function controlDevice(device, action) {
-    const button = event ? event.target : null;
-    const originalHTML = button ? button.innerHTML : null;
-    
-    if (button) {
-        button.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i>';
-        button.disabled = true;
-    }
-    
-    $.ajax({
-        url: '" . base_url('dashboard/control-device') . "',
-        method: 'POST',
-        data: {
-            device: device,
-            action: action,
-            csrf_test_name: $('meta[name=\"csrf-token\"]').attr('content')
-        },
-        dataType: 'json',
-        success: function(response) {
-            if (response.success) {
-                showToast('success', response.message);
-                refreshData();
-            } else {
-                showToast('error', response.message || 'Unknown error');
-                // Revert switch state if failed
-                const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
-                $('#' + switchId).prop('checked', !$('#' + switchId).prop('checked'));
-            }
-        },
-        error: function(xhr, status, error) {
-            showToast('error', 'Network error: ' + error);
-            // Revert switch state
-            const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
-            $('#' + switchId).prop('checked', !$('#' + switchId).prop('checked'));
-        },
-        complete: function() {
-            if (button) {
-                button.innerHTML = originalHTML;
-                button.disabled = false;
-            }
-        }
-    });
 }
 
 function showToast(type, message) {
