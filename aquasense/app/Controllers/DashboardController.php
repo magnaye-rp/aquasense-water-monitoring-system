@@ -18,18 +18,15 @@ class DashboardController extends BaseController
     protected $session;
 
     public function __construct()
-    {    
+    {
+        // Initialize services and models here.
+        // Authentication/authorization is handled by route filters (see Routes.php).
         $this->session = \Config\Services::session();
         $this->commandModel = new \App\Models\DeviceCommandModel();
         $this->sensorReadingModel = new SensorReadingModel();
         $this->alertModel = new AlertModel();
         $this->deviceLogModel = new DeviceLogModel();
         $this->systemSettingsModel = new SystemSettingsModel();
-
-        // Require authentication
-        if (!auth()->loggedIn()) {
-            return redirect()->to('/login');
-        }
     }
 
     public function index()

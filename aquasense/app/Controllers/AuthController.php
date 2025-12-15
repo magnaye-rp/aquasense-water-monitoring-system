@@ -2,16 +2,12 @@
 
 namespace App\Controllers;
 
-use CodeIgniter\Controller;
 use CodeIgniter\HTTP\RedirectResponse;
 use CodeIgniter\Shield\Entities\User;
 
-class AuthController extends Controller
+class AuthController extends BaseController
 {
-    public function __construct()
-    {
-        helper(['form', 'url']);
-    }
+    // BaseController already loads common helpers like 'auth', 'form', and 'url'
 
     public function loginView()
     {

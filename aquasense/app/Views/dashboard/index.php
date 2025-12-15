@@ -494,9 +494,9 @@ function updateGauge(chartId, value, min, max) {
         
         // Update color based on value
         if (value < min || value > max) {
-            chart.data.datasets[0].backgroundColor[0] = 'var(--status-critical)';
+            chart.data.datasets[0].backgroundColor[0] = '#F85149'; // danger
         } else {
-            chart.data.datasets[0].backgroundColor[0] = 'var(--accent-primary)';
+            chart.data.datasets[0].backgroundColor[0] = '#45B7A4'; // accent verdigris
         }
         
         chart.update('active');

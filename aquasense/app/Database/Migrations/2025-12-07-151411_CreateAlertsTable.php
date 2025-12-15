@@ -13,29 +13,31 @@ class CreateAlertsTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
-                'auto_increment' => true
+                'auto_increment' => true,
             ],
             'type' => [
                 'type' => 'VARCHAR',
-                'constraint' => 50
+                'constraint' => 50,
             ],
             'message' => [
-                'type' => 'TEXT'
+                'type' => 'TEXT',
             ],
             'level' => [
                 'type' => 'VARCHAR',
-                'constraint' => 20
+                'constraint' => 20,
             ],
             'created_at' => [
-                'type' => 'DATETIME'
+                'type' => 'DATETIME',
             ],
             'is_read' => [
                 'type' => 'TINYINT',
-                'default' => 0
-            ]
+                'default' => 0,
+            ],
         ]);
+
+        // Use IF NOT EXISTS so rerunning migrations doesn't fail if the table is already present
         $this->forge->addPrimaryKey('id');
-        $this->forge->createTable('alerts');
+        $this->forge->createTable('alerts', true);
     }
 
     public function down()

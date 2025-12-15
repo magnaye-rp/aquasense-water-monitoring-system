@@ -13,7 +13,7 @@ class CreateSensorReadingsTable extends Migration
                 'type' => 'INT',
                 'constraint' => 11,
                 'unsigned' => true,
-                'auto_increment' => true
+                'auto_increment' => true,
             ],
             'temperature' => [
                 'type' => 'FLOAT',
@@ -28,8 +28,10 @@ class CreateSensorReadingsTable extends Migration
                 'type' => 'DATETIME',
             ],
         ]);
+
+        // Use IF NOT EXISTS so rerunning migrations is safe
         $this->forge->addKey('id', true);
-        $this->forge->createTable('sensor_readings');
+        $this->forge->createTable('sensor_readings', true);
     }
 
     public function down()
