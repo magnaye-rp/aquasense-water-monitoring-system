@@ -43,6 +43,8 @@ $routes->group('dashboard', ['filter' => 'session'], function($routes) {
     $routes->get('get-current-data', [DashboardController::class, 'getCurrentData']);
     $routes->get('delete-alert/(:num)', [DashboardController::class, 'deleteAlert']);
     $routes->post('test-control', [DashboardController::class, 'testControl']);
+    $routes->get('test-dashboard', [DashboardController::class, 'test']);
+
 
 });
 
