@@ -22,7 +22,7 @@ class DashboardController extends BaseController
         // Initialize services and models here.
         // Authentication/authorization is handled by route filters (see Routes.php).
         $this->session = \Config\Services::session();
-        $this->commandModel = new \App\Models\DeviceCommandModel();
+        $this->commandModel = new DeviceCommandModel(); // Remove backslash
         $this->sensorReadingModel = new SensorReadingModel();
         $this->alertModel = new AlertModel();
         $this->deviceLogModel = new DeviceLogModel();
@@ -33,6 +33,7 @@ class DashboardController extends BaseController
     {
         // Get latest sensor readings
         $latestReadings = $this->sensorReadingModel->getLatestReadings(1);
+        $autoModeStatus = $this->systemSettingsModel->getAutoModeStatus();
         $currentReading = !empty($latestReadings) ? $latestReadings[0] : null;
 
         // Get system status
@@ -51,7 +52,18 @@ class DashboardController extends BaseController
         $chartData = $this->getChartData();
 
         // Get statistics
-        $statistics = $this->sensorReadingModel->getStatistics('1 DAY');
+        $statistics = $this->sensorReadingModel->getStatistics('1 DAY') ?? [
+            'avg_temperature' => 0,
+            'min_temperature' => 0,
+            'max_temperature' => 0,
+            'avg_ph' => 0,
+            'min_ph' => 0,
+            'max_ph' => 0,
+            'avg_turbidity' => 0,
+            'min_turbidity' => 0,
+            'max_turbidity' => 0,
+            'total_readings' => 0
+        ];
 
         $data = [
             'title' => 'Dashboard - AquaSense',
@@ -62,24 +74,25 @@ class DashboardController extends BaseController
             'chartData' => json_encode($chartData),
             'statistics' => $statistics,
             'unreadAlerts' => $this->alertModel->getUnreadCount(),
-            'user' => auth()->user()
+            'user' => auth()->user(),
+            'autoModeStatus' => $autoModeStatus,
+            'latestCommands' => $this->commandModel->getLatestCommands('NODEMCU_AQUASENSE_001'),
         ];
 
         return view('dashboard/index', $data);
     }
 
-    private function calculate_reading_status($reading)
+    private function calculateReadingStatus($reading) // Fixed method name (camelCase)
     {
         // Get thresholds from database
-        $settingsModel = new SystemSettingsModel();
-        $thresholds = $settingsModel->getThresholds();
+        $thresholds = $this->systemSettingsModel->getThresholds(); // Use existing instance
         
         // Default thresholds if not found
         $tempMin = $thresholds['temp_min'] ?? 20;
         $tempMax = $thresholds['temp_max'] ?? 30;
         $phMin = $thresholds['ph_min'] ?? 6.5;
         $phMax = $thresholds['ph_max'] ?? 8.5;
-        $turbidityMax = $thresholds['turbidity_max'] ?? 10;
+        $turbidityMax = $thresholds['turbidity_max'] ?? 100; // Fixed: was 10, should be 100
         
         // Set warning zones (10% buffer)
         $tempWarningMin = $tempMin + 2;
@@ -124,20 +137,16 @@ class DashboardController extends BaseController
     
     public function sensorData()
     {
-        
-        $sensorModel = new SensorReadingModel();
-        $settingsModel = new SystemSettingsModel();
-
-        $thresholds = $settingsModel->getThresholds();
+        $thresholds = $this->systemSettingsModel->getThresholds(); // Use existing instance
         
         // Get readings with pagination
         $perPage = 20;
-        $readings = $sensorModel->orderBy('created_at', 'DESC')->paginate($perPage);
+        $readings = $this->sensorReadingModel->orderBy('created_at', 'DESC')->paginate($perPage);
         
         // Calculate status for each reading using helper
         $readingsWithStatus = [];
         foreach ($readings as $reading) {
-            $reading['status'] = $this->calculate_reading_status($reading);
+            $reading['status'] = $this->calculateReadingStatus($reading); // Fixed method call
             $readingsWithStatus[] = $reading;
         }
         
@@ -145,10 +154,13 @@ class DashboardController extends BaseController
         $chartData = $this->getChartData();
         
         $data = [
+            'title' => 'Sensor Data - AquaSense', // Added title
             'readings' => $readingsWithStatus,
             'chartData' => json_encode($chartData), 
             'thresholds' => $thresholds,
-            'pager' => $sensorModel->pager
+            'pager' => $this->sensorReadingModel->pager,
+            'unreadAlerts' => $this->alertModel->getUnreadCount(), // Added
+            'user' => auth()->user() // Added
         ];
         
         return view('dashboard/sensor-data', $data);
@@ -156,13 +168,12 @@ class DashboardController extends BaseController
 
     private function getChartData()
     {
-        $sensorModel = new SensorReadingModel();
-        
         // Get last 24 hours of data
         $startTime = date('Y-m-d H:i:s', strtotime('-24 hours'));
-        $chartReadings = $sensorModel->where('created_at >=', $startTime)
-                                    ->orderBy('created_at', 'ASC')
-                                    ->findAll();
+        $chartReadings = $this->sensorReadingModel
+            ->where('created_at >=', $startTime)
+            ->orderBy('created_at', 'ASC')
+            ->findAll();
         
         $data = [
             'labels' => [],
@@ -213,6 +224,7 @@ class DashboardController extends BaseController
 
         $currentStatus = $this->getDeviceStatus();
         $settings = $this->systemSettingsModel->getCurrentSettings();
+        $autoModeStatus = $this->systemSettingsModel->getAutoModeStatus();
 
         $data = [
             'title' => 'Device Control - AquaSense',
@@ -220,6 +232,8 @@ class DashboardController extends BaseController
             'pager' => $pager,
             'currentStatus' => $currentStatus,
             'settings' => $settings,
+            'autoModeStatus' => $autoModeStatus, // Added
+            'latestCommands' => $this->commandModel->getLatestCommands('NODEMCU_AQUASENSE_001'), // Added
             'unreadAlerts' => $this->alertModel->getUnreadCount(),
             'user' => auth()->user()
         ];
@@ -230,6 +244,25 @@ class DashboardController extends BaseController
     public function settings()
     {
         $settings = $this->systemSettingsModel->getCurrentSettings();
+        
+        // Create default settings if none exist
+        if (!$settings) {
+            $defaultSettings = [
+                'water_type' => 'generic',
+                'oxygenator_auto' => 0,
+                'pump_auto' => 0,
+                'oxygenator_interval' => 0,
+                'pump_interval' => 0,
+                'ph_good_min' => 6.5,
+                'ph_good_max' => 8.5,
+                'turbidity_limit' => 100,
+                'temperature_range' => '20-30'
+            ];
+            
+            $this->systemSettingsModel->insert($defaultSettings);
+            $settings = $this->systemSettingsModel->getCurrentSettings();
+        }
+
         $waterTypes = [
             'freshwater' => 'Freshwater',
             'saltwater' => 'Saltwater',
@@ -272,6 +305,14 @@ class DashboardController extends BaseController
             ]);
         }
 
+        // Parse boolean values
+        $postData['oxygenator_auto'] = isset($postData['oxygenator_auto']) ? 1 : 0;
+        $postData['pump_auto'] = isset($postData['pump_auto']) ? 1 : 0;
+        
+        // Convert interval values to integers
+        $postData['oxygenator_interval'] = isset($postData['oxygenator_interval']) ? (int)$postData['oxygenator_interval'] : 0;
+        $postData['pump_interval'] = isset($postData['pump_interval']) ? (int)$postData['pump_interval'] : 0;
+
         // Update settings
         $result = $this->systemSettingsModel->updateSettings($postData);
 
@@ -312,7 +353,7 @@ class DashboardController extends BaseController
             ]);
         }
 
-        if (!in_array($action, ['on', 'off'])) {
+        if (!in_array(strtolower($action), ['on', 'off'])) {
             return $this->response->setJSON([
                 'success' => false,
                 'message' => 'Invalid action'
@@ -320,21 +361,25 @@ class DashboardController extends BaseController
         }
 
         try {
-            // Load model
-            $commandModel = new \App\Models\DeviceCommandModel();
+            // Check for duplicate command (prevent multiple commands in short time)
+            if ($this->commandModel->isDuplicateCommand($device, $action, 'NODEMCU_AQUASENSE_001')) {
+                return $this->response->setJSON([
+                    'success' => false,
+                    'message' => 'A similar command was recently sent. Please wait.'
+                ]);
+            }
 
             // Add command to database
-            $commandId = $commandModel->addCommand($device, strtoupper($action), 'NODEMCU_AQUASENSE_001');
+            $commandId = $this->commandModel->addCommand($device, strtoupper($action), 'NODEMCU_AQUASENSE_001');
 
             log_message('debug', "Command added to database. ID: {$commandId}");
 
-            // Log device action
-            $this->deviceLogModel->save([
-                'device_name' => $device,
-                'action' => strtoupper($action),
-                'triggered_by' => 'manual',
-                'user_id' => auth()->id()
-            ]);
+            // Log device action (FIXED: device_logs table doesn't have user_id column)
+            $this->deviceLogModel->logDeviceAction(
+                $device, 
+                strtoupper($action), 
+                'manual'
+            );
 
             // Return success response
             return $this->response->setJSON([
@@ -412,25 +457,31 @@ class DashboardController extends BaseController
         $message = 'All parameters within normal range';
         $color = 'success';
 
-        // Check thresholds
-        if ($currentReading['temperature'] < $thresholds['temp_min'] || 
-            $currentReading['temperature'] > $thresholds['temp_max']) {
-            $status = 'warning';
-            $message = 'Temperature out of range';
-            $color = 'warning';
+        // Check thresholds (with null safety)
+        if (isset($currentReading['temperature'])) {
+            if ($currentReading['temperature'] < ($thresholds['temp_min'] ?? 20) || 
+                $currentReading['temperature'] > ($thresholds['temp_max'] ?? 30)) {
+                $status = 'warning';
+                $message = 'Temperature out of range';
+                $color = 'warning';
+            }
         }
 
-        if ($currentReading['ph_level'] < $thresholds['ph_min'] || 
-            $currentReading['ph_level'] > $thresholds['ph_max']) {
-            $status = 'danger';
-            $message = 'pH level critical';
-            $color = 'danger';
+        if (isset($currentReading['ph_level'])) {
+            if ($currentReading['ph_level'] < ($thresholds['ph_min'] ?? 6.5) || 
+                $currentReading['ph_level'] > ($thresholds['ph_max'] ?? 8.5)) {
+                $status = 'danger';
+                $message = 'pH level critical';
+                $color = 'danger';
+            }
         }
 
-        if ($currentReading['turbidity'] > $thresholds['turbidity_max']) {
-            $status = 'warning';
-            $message = 'High turbidity detected';
-            $color = 'warning';
+        if (isset($currentReading['turbidity'])) {
+            if ($currentReading['turbidity'] > ($thresholds['turbidity_max'] ?? 100)) {
+                $status = 'warning';
+                $message = 'High turbidity detected';
+                $color = 'warning';
+            }
         }
 
         return [
@@ -443,32 +494,28 @@ class DashboardController extends BaseController
 
     private function getDeviceStatus()
     {
-        // Use the device command model instead of device logs
-        $commandModel = new \App\Models\DeviceCommandModel();
-
         // Get latest commands
-        $oxygenatorCommand = $commandModel->getCurrentCommand('oxygenator', 'NODEMCU_AQUASENSE_001');
-        $waterPumpCommand = $commandModel->getCurrentCommand('water_pump', 'NODEMCU_AQUASENSE_001');
+        $oxygenatorCommand = $this->commandModel->getCurrentCommand('oxygenator', 'NODEMCU_AQUASENSE_001');
+        $waterPumpCommand = $this->commandModel->getCurrentCommand('water_pump', 'NODEMCU_AQUASENSE_001');
 
-        // Log for debugging
-        log_message('debug', 'Oxygenator command: ' . print_r($oxygenatorCommand, true));
-        log_message('debug', 'Water pump command: ' . print_r($waterPumpCommand, true));
+        // Get latest device logs for triggered_by information
+        $oxygenatorLog = $this->deviceLogModel->getCurrentState('oxygenator');
+        $waterPumpLog = $this->deviceLogModel->getCurrentState('water_pump');
 
         return [
             'oxygenator' => [
                 'state' => ($oxygenatorCommand && strtoupper($oxygenatorCommand['command']) === 'ON') ? 'ON' : 'OFF',
                 'last_updated' => $oxygenatorCommand ? $oxygenatorCommand['created_at'] : null,
-                'triggered_by' => 'manual'
+                'triggered_by' => $oxygenatorLog ? $oxygenatorLog['triggered_by'] : 'unknown'
             ],
             'water_pump' => [
                 'state' => ($waterPumpCommand && strtoupper($waterPumpCommand['command']) === 'ON') ? 'ON' : 'OFF',
                 'last_updated' => $waterPumpCommand ? $waterPumpCommand['created_at'] : null,
-                'triggered_by' => 'manual'
+                'triggered_by' => $waterPumpLog ? $waterPumpLog['triggered_by'] : 'unknown'
             ]
         ];
     }
 
-    // Temporary test method
     public function testAjax()
     {
         // Simple test that always works
@@ -480,9 +527,8 @@ class DashboardController extends BaseController
     }
 
     public function test()
-{
-    echo 'OK';
-    exit;
-}
-
+    {
+        echo 'OK';
+        exit;
+    }
 }

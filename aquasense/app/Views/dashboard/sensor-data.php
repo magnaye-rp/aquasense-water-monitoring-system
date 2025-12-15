@@ -53,50 +53,51 @@ if (!function_exists('get_status_badge')) {
 ?>
 
 <style>
-/* Custom CSS for white text and black background */
+<style>
+/* Custom CSS for dark theme */
 .card {
-    background: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary) !important;
 }
 
 .card-header {
-    background: rgba(0, 0, 0, 0.8) !important;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
-    color: white !important;
+    background: rgba(0, 0, 0, 0.2) !important;
+    border-bottom: 1px solid var(--border-subtle);
+    color: var(--text-primary) !important;
 }
 
 .card-body {
-    background: #000000 !important;
+    background: var(--bg-card) !important;
 }
 
 .table {
-    color: white !important;
-    background: #000000 !important;
-    border-color: rgba(255, 255, 255, 0.2);
+    color: var(--text-primary) !important;
+    background: var(--bg-card) !important;
+    border-color: var(--border-subtle);
 }
 
 .table thead th {
-    border-bottom: 2px solid rgba(255, 255, 255, 0.3);
-    color: white !important;
+    border-bottom: 2px solid var(--border-subtle);
+    color: var(--text-primary) !important;
     font-weight: 600;
-    background: rgba(0, 0, 0, 0.8);
+    background: rgba(0, 0, 0, 0.1);
 }
 
 .table tbody td {
-    border-color: rgba(255, 255, 255, 0.2);
-    background: #000000 !important;
+    border-color: var(--border-subtle);
+    background: var(--bg-card) !important;
 }
 
 .table-hover tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: white !important;
+    background-color: var(--accent-soft) !important;
+    color: var(--text-primary) !important;
 }
 
 /* DataTable specific styling */
 .dataTables_wrapper {
-    color: white !important;
-    background: #000000 !important;
+    color: var(--text-primary) !important;
+    background: var(--bg-card) !important;
 }
 
 .dataTables_wrapper .dataTables_length,
@@ -104,85 +105,85 @@ if (!function_exists('get_status_badge')) {
 .dataTables_wrapper .dataTables_info,
 .dataTables_wrapper .dataTables_paginate,
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    color: white !important;
+    color: var(--text-primary) !important;
     background: transparent !important;
 }
 
 .dataTables_wrapper .dataTables_filter input,
 .dataTables_wrapper .dataTables_length select {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-primary) !important;
 }
 
 .dataTables_wrapper .dataTables_filter input:focus,
 .dataTables_wrapper .dataTables_length select:focus {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-    color: white !important;
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    background-color: var(--bg-card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 0.2rem rgba(69, 183, 164, 0.25);
 }
 
 .dataTables_wrapper .dataTables_filter input::placeholder {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-muted) !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button {
-    background: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-primary) !important;
     margin-left: 2px !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button:hover {
-    background: rgba(255, 255, 255, 0.2) !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
+    background: var(--accent-soft) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-primary) !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.current {
-    background: var(--bs-accent) !important;
-    border-color: var(--bs-accent) !important;
+    background: var(--accent) !important;
+    border-color: var(--accent) !important;
     color: white !important;
 }
 
 .dataTables_wrapper .dataTables_paginate .paginate_button.disabled {
-    background: rgba(255, 255, 255, 0.05) !important;
-    color: rgba(255, 255, 255, 0.5) !important;
+    background: var(--bg-muted) !important;
+    color: var(--text-muted) !important;
 }
 
 /* Custom filter controls */
 .input-group-text {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
+    background-color: var(--bg-muted) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-secondary) !important;
 }
 
 .form-control, .form-select {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    border: 1px solid rgba(255, 255, 255, 0.3) !important;
-    color: white !important;
+    background-color: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle) !important;
+    color: var(--text-primary) !important;
 }
 
 .form-control:focus, .form-select:focus {
-    background-color: rgba(255, 255, 255, 0.15) !important;
-    border-color: rgba(255, 255, 255, 0.5) !important;
-    color: white !important;
-    box-shadow: 0 0 0 0.25rem rgba(255, 255, 255, 0.25);
+    background-color: var(--bg-card) !important;
+    border-color: var(--accent) !important;
+    color: var(--text-primary) !important;
+    box-shadow: 0 0 0 0.25rem rgba(69, 183, 164, 0.25);
 }
 
 .form-control::placeholder {
-    color: rgba(255, 255, 255, 0.6) !important;
+    color: var(--text-muted) !important;
 }
 
 .btn-outline-secondary {
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
+    color: var(--text-secondary) !important;
+    border-color: var(--border-subtle) !important;
 }
 
 .btn-outline-secondary:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: white !important;
+    background-color: var(--bg-muted) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Badge styling */
@@ -192,21 +193,21 @@ if (!function_exists('get_status_badge')) {
 
 /* Modal styling */
 .modal-content {
-    background: #000000 !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
-    color: white !important;
+    background: var(--bg-card) !important;
+    border: 1px solid var(--border-subtle);
+    color: var(--text-primary) !important;
 }
 
 .modal-header {
-    border-bottom: 1px solid rgba(255, 255, 255, 0.2);
+    border-bottom: 1px solid var(--border-subtle);
 }
 
 .modal-footer {
-    border-top: 1px solid rgba(255, 255, 255, 0.2);
+    border-top: 1px solid var(--border-subtle);
 }
 
 .modal-body {
-    color: white !important;
+    color: var(--text-primary) !important;
 }
 
 .btn-close {
@@ -215,14 +216,14 @@ if (!function_exists('get_status_badge')) {
 
 /* DataTable buttons styling */
 .dt-buttons .btn {
-    color: white !important;
-    border-color: rgba(255, 255, 255, 0.3) !important;
-    background: rgba(255, 255, 255, 0.1) !important;
+    color: var(--text-primary) !important;
+    border-color: var(--border-subtle) !important;
+    background: var(--bg-card) !important;
 }
 
 .dt-buttons .btn:hover {
-    background-color: rgba(255, 255, 255, 0.2) !important;
-    color: white !important;
+    background-color: var(--accent-soft) !important;
+    color: var(--text-primary) !important;
 }
 
 /* Custom show entries dropdown */
@@ -233,7 +234,7 @@ if (!function_exists('get_status_badge')) {
 }
 
 .show-entries-container label {
-    color: white !important;
+    color: var(--text-primary) !important;
     margin-right: 10px;
     margin-bottom: 0;
 }
@@ -243,72 +244,92 @@ if (!function_exists('get_status_badge')) {
     min-width: 80px;
 }
 
-/* Status badges with white text */
+/* Status badges */
 .bg-warning {
-    background-color: #ffc107 !important;
-    color: #212529 !important;
+    background-color: var(--warn) !important;
 }
 
 .bg-danger {
-    background-color: #dc3545 !important;
-    color: white !important;
+    background-color: var(--danger) !important;
 }
 
 .bg-secondary {
-    background-color: #6c757d !important;
-    color: white !important;
+    background-color: var(--text-secondary) !important;
 }
 
-.status-badge {
-    background-color: #28a745 !important;
-    color: white !important;
+.bg-success {
+    background-color: var(--ok) !important;
 }
 
 .bg-accent {
-    background-color: var(--bs-accent) !important;
-    color: white !important;
+    background-color: var(--accent) !important;
 }
 
 /* Info box */
 .bg-light {
-    background-color: rgba(255, 255, 255, 0.1) !important;
-    color: rgba(255, 255, 255, 0.9) !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background-color: var(--accent-soft) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle);
 }
 
-/* Ensure table rows are black */
+/* Ensure table rows use theme colors */
 #sensorReadingsTable tbody tr {
-    background-color: #000000 !important;
+    background-color: var(--bg-card) !important;
 }
 
 #sensorReadingsTable tbody tr:hover {
-    background-color: rgba(255, 255, 255, 0.1) !important;
+    background-color: var(--accent-soft) !important;
 }
 
 /* DataTable processing overlay */
 .dataTables_processing {
-    background: rgba(0, 0, 0, 0.8) !important;
-    color: white !important;
-    border: 1px solid rgba(255, 255, 255, 0.2);
+    background: var(--bg-card) !important;
+    color: var(--text-primary) !important;
+    border: 1px solid var(--border-subtle);
 }
 
 /* Custom scrollbar */
 .table-responsive::-webkit-scrollbar {
     height: 8px;
-    background: #000000;
+    background: var(--bg-page);
 }
 
 .table-responsive::-webkit-scrollbar-track {
-    background: rgba(255, 255, 255, 0.1);
+    background: var(--bg-muted);
 }
 
 .table-responsive::-webkit-scrollbar-thumb {
-    background: rgba(255, 255, 255, 0.3);
+    background: var(--text-secondary);
     border-radius: 4px;
 }
 
 .table-responsive::-webkit-scrollbar-thumb:hover {
-    background: rgba(255, 255, 255, 0.4);
+    background: var(--accent);
+}
+
+/* Alert styling for modal */
+.alert-success {
+    background-color: rgba(63, 185, 80, 0.1);
+    border-color: var(--ok);
+    color: var(--text-primary);
+}
+
+.alert-warning {
+    background-color: rgba(210, 153, 34, 0.1);
+    border-color: var(--warn);
+    color: var(--text-primary);
+}
+
+.alert-danger {
+    background-color: rgba(248, 81, 73, 0.1);
+    border-color: var(--danger);
+    color: var(--text-primary);
+}
+
+.alert-secondary {
+    background-color: var(--accent-soft);
+    border-color: var(--border-subtle);
+    color: var(--text-primary);
 }
 </style>
 
@@ -478,22 +499,23 @@ if (!function_exists('get_status_badge')) {
 
 <script>
 $(document).ready(function() {
-    // Store threshold values
+    // Store threshold values from PHP
     var tempMin = <?= $thresholds['temp_min'] ?? 20 ?>;
     var tempMax = <?= $thresholds['temp_max'] ?? 30 ?>;
     var phMin = <?= $thresholds['ph_min'] ?? 6.5 ?>;
     var phMax = <?= $thresholds['ph_max'] ?? 8.5 ?>;
+    var turbidityMax = <?= $thresholds['turbidity_max'] ?? 100 ?>;
     
     // Initialize DataTable
     var table = $('#sensorReadingsTable').DataTable({
         "order": [[0, 'desc']],
         "pageLength": 25,
-        "lengthChange": false,
+        "lengthMenu": [[10, 25, 50, 100, -1], [10, 25, 50, 100, "All"]],
         "responsive": true,
         "dom": '<"row mb-3"<"col-sm-12 col-md-6"l><"col-sm-12 col-md-6"f>><"row"<"col-sm-12"tr>><"row mt-3"<"col-sm-12 col-md-5"i><"col-sm-12 col-md-7"p>>',
         "language": {
             "search": "<i class='fas fa-search'></i> ",
-            "lengthMenu": "",
+            "lengthMenu": "Show _MENU_ entries",
             "info": "Showing _START_ to _END_ of _TOTAL_ entries",
             "infoEmpty": "Showing 0 to 0 of 0 entries",
             "infoFiltered": "(filtered from _MAX_ total entries)",
@@ -505,13 +527,37 @@ $(document).ready(function() {
                 "previous": "<i class='fas fa-angle-left'></i>"
             }
         },
-        "columnDefs": [
-            {
-                "targets": [5],
-                "searchable": false,
-                "orderable": false
-            }
-        ]
+        "columns": [
+            { "data": "timestamp", "orderable": true },
+            { "data": "temperature", "orderable": true },
+            { "data": "ph", "orderable": true },
+            { "data": "turbidity", "orderable": true },
+            { "data": "status", "orderable": true },
+            { "data": "actions", "orderable": false, "searchable": false }
+        ],
+        "processing": true,
+        "initComplete": function(settings, json) {
+            // Add custom show entries control
+            $('.dataTables_length').html(`
+                <div class="show-entries-container">
+                    <label for="showEntries">Show:</label>
+                    <select class="form-select form-select-sm" id="showEntries">
+                        <option value="10">10</option>
+                        <option value="25" selected>25</option>
+                        <option value="50">50</option>
+                        <option value="100">100</option>
+                        <option value="-1">All</option>
+                    </select>
+                    <span class="ms-2">entries</span>
+                </div>
+            `);
+            
+            // Handle show entries change
+            $('#showEntries').on('change', function() {
+                var entries = $(this).val();
+                table.page.len(entries).draw();
+            });
+        }
     });
 
     // Function to apply all filters

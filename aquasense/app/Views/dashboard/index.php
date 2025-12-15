@@ -3,21 +3,20 @@
 <!-- Status Banner -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card status-banner <?= $status['color'] ?>">
+        <div class="card status-banner border-<?= $status['color'] ?>">
             <div class="card-body py-3">
                 <div class="d-flex justify-content-between align-items-center">
                     <div class="d-flex align-items-center">
                         <i class="fas fa-<?= $status['color'] == 'danger' ? 'exclamation-triangle' : 
                                          ($status['color'] == 'warning' ? 'exclamation-circle' : 'check-circle') ?> 
-                                         me-3 fs-4 <?= $status['color'] == 'danger' ? 'text-danger' : 
-                                                    ($status['color'] == 'warning' ? 'text-warning' : 'text-accent') ?>"></i>
+                                         me-3 fs-4 text-<?= $status['color'] ?>"></i>
                         <div>
-                            <h5 class="card-title mb-1">System Status: <?= ucfirst($status['status']) ?></h5>
-                            <p class="card-text mb-0 text-muted"><?= $status['message'] ?></p>
+                            <h5 class="card-title mb-1 text-white">System Status: <?= ucfirst($status['status']) ?></h5>
+                            <p class="card-text mb-0 text-white-50"><?= $status['message'] ?></p>
                         </div>
                     </div>
                     <div>
-                        <span class="status-badge <?= $status['color'] ?>">
+                        <span class="badge bg-<?= $status['color'] ?> px-3 py-2">
                             <?= strtoupper($status['status']) ?>
                         </span>
                     </div>
@@ -31,36 +30,41 @@
 <div class="row mb-4">
     <!-- Temperature Gauge -->
     <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-                <i class="fas fa-thermometer-half me-2 text-accent"></i>
-                <span>Temperature</span>
+        <div class="card h-100 border-secondary">
+            <div class="card-header d-flex align-items-center bg-secondary">
+                <i class="fas fa-thermometer-half me-2 text-white"></i>
+                <span class="text-white">Temperature</span>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-dark">
                 <?php if ($currentReading): ?>
-                    <div class="gauge-container">
-                        <canvas id="tempGauge"></canvas>
-                        <div class="gauge-value">
-                            <div class="gauge-primary-value">
+                    <div class="gauge-container position-relative" style="height: 180px;">
+                        <canvas id="tempGauge" height="180"></canvas>
+                        <div class="gauge-value position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="gauge-primary-value display-5 fw-bold text-white">
                                 <?= number_format($currentReading['temperature'], 1) ?>
                             </div>
-                            <div class="gauge-unit">°C</div>
+                            <div class="gauge-unit text-white-50">°C</div>
                         </div>
-                        <div class="gauge-threshold text-center mt-2">
-                            Range: <?= $status['thresholds']['temp_min'] ?>-<?= $status['thresholds']['temp_max'] ?>°C
+                        <div class="gauge-threshold text-center mt-3">
+                            <small class="text-white-50">
+                                Range: <?= $status['thresholds']['temp_min'] ?>-<?= $status['thresholds']['temp_max'] ?>°C
+                            </small>
                         </div>
                     </div>
-                    <div class="text-center gauge-status">
+                    <div class="text-center mt-3">
                         <?php if ($currentReading['temperature'] < $status['thresholds']['temp_min']): ?>
                             <span class="badge bg-warning">Low</span>
                         <?php elseif ($currentReading['temperature'] > $status['thresholds']['temp_max']): ?>
                             <span class="badge bg-danger">High</span>
                         <?php else: ?>
-                            <span class="badge status-badge">Normal</span>
+                            <span class="badge bg-success">Normal</span>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="text-center text-muted py-4">No data available</div>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-thermometer-empty fa-3x mb-3"></i>
+                        <p class="mb-0">No temperature data available</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -68,35 +72,40 @@
 
     <!-- pH Level Gauge -->
     <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-                <i class="fas fa-vial me-2 text-accent"></i>
-                <span>pH Level</span>
+        <div class="card h-100 border-secondary">
+            <div class="card-header d-flex align-items-center bg-secondary">
+                <i class="fas fa-vial me-2 text-white"></i>
+                <span class="text-white">pH Level</span>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-dark">
                 <?php if ($currentReading): ?>
-                    <div class="gauge-container">
-                        <canvas id="phGauge"></canvas>
-                        <div class="gauge-value">
-                            <div class="gauge-primary-value">
+                    <div class="gauge-container position-relative" style="height: 180px;">
+                        <canvas id="phGauge" height="180"></canvas>
+                        <div class="gauge-value position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="gauge-primary-value display-5 fw-bold text-white">
                                 <?= number_format($currentReading['ph_level'], 2) ?>
                             </div>
                         </div>
-                        <div class="gauge-threshold text-center mt-2">
-                            Range: <?= $status['thresholds']['ph_min'] ?>-<?= $status['thresholds']['ph_max'] ?>
+                        <div class="gauge-threshold text-center mt-3">
+                            <small class="text-white-50">
+                                Range: <?= number_format($status['thresholds']['ph_min'], 1) ?>-<?= number_format($status['thresholds']['ph_max'], 1) ?>
+                            </small>
                         </div>
                     </div>
-                    <div class="text-center gauge-status">
+                    <div class="text-center mt-3">
                         <?php if ($currentReading['ph_level'] < $status['thresholds']['ph_min']): ?>
                             <span class="badge bg-danger">Acidic</span>
                         <?php elseif ($currentReading['ph_level'] > $status['thresholds']['ph_max']): ?>
                             <span class="badge bg-danger">Alkaline</span>
                         <?php else: ?>
-                            <span class="badge status-badge">Normal</span>
+                            <span class="badge bg-success">Normal</span>
                         <?php endif; ?>
-                        </div>
+                    </div>
                 <?php else: ?>
-                    <div class="text-center text-muted py-4">No data available</div>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-vial fa-3x mb-3"></i>
+                        <p class="mb-0">No pH data available</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -104,34 +113,39 @@
 
     <!-- Turbidity Gauge -->
     <div class="col-md-4 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex align-items-center">
-                <i class="fas fa-water me-2 text-accent"></i>
-                <span>Turbidity</span>
+        <div class="card h-100 border-secondary">
+            <div class="card-header d-flex align-items-center bg-secondary">
+                <i class="fas fa-water me-2 text-white"></i>
+                <span class="text-white">Turbidity</span>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-dark">
                 <?php if ($currentReading): ?>
-                    <div class="gauge-container">
-                        <canvas id="turbidityGauge"></canvas>
-                        <div class="gauge-value">
-                            <div class="gauge-primary-value">
+                    <div class="gauge-container position-relative" style="height: 180px;">
+                        <canvas id="turbidityGauge" height="180"></canvas>
+                        <div class="gauge-value position-absolute top-50 start-50 translate-middle text-center">
+                            <div class="gauge-primary-value display-5 fw-bold text-white">
                                 <?= number_format($currentReading['turbidity'], 0) ?>
                             </div>
-                            <div class="gauge-unit">NTU</div>
+                            <div class="gauge-unit text-white-50">NTU</div>
                         </div>
-                        <div class="gauge-threshold text-center mt-2">
-                            Max: <?= $status['thresholds']['turbidity_max'] ?> NTU
+                        <div class="gauge-threshold text-center mt-3">
+                            <small class="text-white-50">
+                                Max: <?= $status['thresholds']['turbidity_max'] ?> NTU
+                            </small>
                         </div>
                     </div>
-                    <div class="text-center gauge-status">
+                    <div class="text-center mt-3">
                         <?php if ($currentReading['turbidity'] > $status['thresholds']['turbidity_max']): ?>
                             <span class="badge bg-danger">High</span>
                         <?php else: ?>
-                            <span class="badge status-badge">Normal</span>
+                            <span class="badge bg-success">Normal</span>
                         <?php endif; ?>
                     </div>
                 <?php else: ?>
-                    <div class="text-center text-muted py-4">No data available</div>
+                    <div class="text-center text-muted py-5">
+                        <i class="fas fa-water fa-3x mb-3"></i>
+                        <p class="mb-0">No turbidity data available</p>
+                    </div>
                 <?php endif; ?>
             </div>
         </div>
@@ -141,13 +155,13 @@
 <!-- Charts -->
 <div class="row mb-4">
     <div class="col-12">
-        <div class="card">
-            <div class="card-header d-flex align-items-center">
-                <i class="fas fa-chart-line me-2 text-accent"></i>
-                <span>Sensor Trends (Last 24 Hours)</span>
+        <div class="card border-secondary">
+            <div class="card-header d-flex align-items-center bg-secondary">
+                <i class="fas fa-chart-line me-2 text-white"></i>
+                <span class="text-white">Sensor Trends (Last 24 Hours)</span>
             </div>
-            <div class="card-body">
-                <div class="chart-container">
+            <div class="card-body bg-dark">
+                <div class="chart-container" style="position: relative; height: 300px;">
                     <canvas id="sensorChart"></canvas>
                 </div>
             </div>
@@ -159,32 +173,35 @@
 <div class="row">
     <!-- Recent Alerts -->
     <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card h-100 border-secondary">
+            <div class="card-header d-flex justify-content-between align-items-center bg-secondary">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-bell me-2 text-accent"></i>
-                    <span>Recent Alerts</span>
+                    <i class="fas fa-bell me-2 text-white"></i>
+                    <span class="text-white">Recent Alerts</span>
+                    <?php if ($unreadAlerts > 0): ?>
+                        <span class="badge bg-danger ms-2"><?= $unreadAlerts ?> new</span>
+                    <?php endif; ?>
                 </div>
-                <a href="<?= base_url('dashboard/alerts') ?>" class="text-accent text-decoration-none">
+                <a href="<?= base_url('dashboard/alerts') ?>" class="text-white text-decoration-none">
                     View All <i class="fas fa-arrow-right ms-1"></i>
                 </a>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-dark">
                 <?php if (empty($alerts)): ?>
                     <div class="text-center py-5">
-                        <i class="fas fa-check-circle fa-3x mb-3 text-accent opacity-50"></i>
+                        <i class="fas fa-check-circle fa-3x mb-3 text-success opacity-50"></i>
                         <p class="text-muted mb-0">No recent alerts</p>
                     </div>
                 <?php else: ?>
                     <div class="list-group list-group-flush">
                         <?php foreach ($alerts as $alert): ?>
-                            <div class="alert-item <?= $alert['level'] ?> mb-3">
-                                <div class="d-flex justify-content-between align-items-start mb-1">
-                                    <h6 class="mb-0 fw-semibold"><?= ucfirst($alert['type']) ?></h6>
-                                    <small class="text-muted"><?= date('H:i', strtotime($alert['created_at'])) ?></small>
+                            <div class="alert-item border-<?= $alert['level'] ?> mb-3 p-3 rounded bg-dark">
+                                <div class="d-flex justify-content-between align-items-start mb-2">
+                                    <h6 class="mb-0 fw-semibold text-white"><?= ucfirst($alert['type']) ?></h6>
+                                    <small class="text-white-50"><?= date('H:i', strtotime($alert['created_at'])) ?></small>
                                 </div>
-                                <p class="mb-2"><?= $alert['message'] ?></p>
-                                <span class="badge status-badge <?= $alert['level'] ?>">
+                                <p class="mb-2 text-white-50"><?= htmlspecialchars($alert['message']) ?></p>
+                                <span class="badge bg-<?= $alert['level'] ?>">
                                     <?= strtoupper($alert['level']) ?>
                                 </span>
                             </div>
@@ -197,37 +214,45 @@
 
     <!-- Device Control -->
     <div class="col-lg-6 mb-4">
-        <div class="card h-100">
-            <div class="card-header d-flex justify-content-between align-items-center">
+        <div class="card h-100 border-secondary">
+            <div class="card-header d-flex justify-content-between align-items-center bg-secondary">
                 <div class="d-flex align-items-center">
-                    <i class="fas fa-cogs me-2 text-accent"></i>
-                    <span>Device Control</span>
+                    <i class="fas fa-cogs me-2 text-white"></i>
+                    <span class="text-white">Device Control</span>
                 </div>
-                <a href="<?= base_url('dashboard/devices') ?>" class="text-accent text-decoration-none">
+                <a href="<?= base_url('dashboard/devices') ?>" class="text-white text-decoration-none">
                     Manage <i class="fas fa-arrow-right ms-1"></i>
                 </a>
             </div>
-            <div class="card-body">
+            <div class="card-body bg-dark">
                 <div class="row">
                     <!-- Oxygenator -->
                     <div class="col-md-6 mb-3">
-                        <div class="card device-card h-100 <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'device-on' : 'device-off' ?>"
-                             onclick="controlDevice('oxygenator', '<?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'off' : 'on' ?>')">
-                            <div class="card-body text-center py-4">
-                                <i class="fas fa-wind device-icon"></i>
-                                <h5 class="card-title mb-3">Oxygenator</h5>
+                        <div class="card h-100 border-<?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'success' : 'secondary' ?>">
+                            <div class="card-body text-center py-4 bg-dark">
+                                <i class="fas fa-wind fa-3x mb-3 text-<?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'success' : 'secondary' ?>"></i>
+                                <h5 class="card-title mb-3 text-white">Oxygenator</h5>
                                 <div class="d-flex justify-content-center align-items-center mb-3">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" 
                                                id="oxySwitch" <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
-                                               onchange="controlDevice('oxygenator', this.checked ? 'on' : 'off')">
-                                        <label class="form-check-label ms-2 fw-medium" for="oxySwitch">
+                                               onchange="controlDevice('oxygenator', this.checked ? 'on' : 'off')"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2 fw-medium text-white" for="oxySwitch">
                                             <?= $deviceStatus['oxygenator']['state'] == 'ON' ? 'ON' : 'OFF' ?>
                                         </label>
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    Triggered by: <?= $deviceStatus['oxygenator']['triggered_by'] ? ucfirst($deviceStatus['oxygenator']['triggered_by']) : 'Unknown' ?>
+                                <small class="text-white-50">
+                                    <i class="fas fa-history me-1"></i>
+                                    <?php if ($deviceStatus['oxygenator']['last_updated']): ?>
+                                        <?= date('H:i', strtotime($deviceStatus['oxygenator']['last_updated'])) ?>
+                                    <?php else: ?>
+                                        Never
+                                    <?php endif; ?>
+                                    <br>
+                                    <i class="fas fa-user me-1"></i>
+                                    <?= ucfirst($deviceStatus['oxygenator']['triggered_by']) ?>
                                 </small>
                             </div>
                         </div>
@@ -235,25 +260,54 @@
 
                     <!-- Water Pump -->
                     <div class="col-md-6 mb-3">
-                        <div class="card device-card h-100 <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'device-on' : 'device-off' ?>"
-                             onclick="controlDevice('water_pump', '<?= $deviceStatus['water_pump']['state'] == 'ON' ? 'off' : 'on' ?>')">
-                            <div class="card-body text-center py-4">
-                                <i class="fas fa-tint device-icon"></i>
-                                <h5 class="card-title mb-3">Water Pump</h5>
+                        <div class="card h-100 border-<?= $deviceStatus['water_pump']['state'] == 'ON' ? 'success' : 'secondary' ?>">
+                            <div class="card-body text-center py-4 bg-dark">
+                                <i class="fas fa-tint fa-3x mb-3 text-<?= $deviceStatus['water_pump']['state'] == 'ON' ? 'success' : 'secondary' ?>"></i>
+                                <h5 class="card-title mb-3 text-white">Water Pump</h5>
                                 <div class="d-flex justify-content-center align-items-center mb-3">
                                     <div class="form-check form-switch">
                                         <input class="form-check-input" type="checkbox" 
                                                id="pumpSwitch" <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
-                                               onchange="controlDevice('water_pump', this.checked ? 'on' : 'off')">
-                                        <label class="form-check-label ms-2 fw-medium" for="pumpSwitch">
+                                               onchange="controlDevice('water_pump', this.checked ? 'on' : 'off')"
+                                               style="width: 3em; height: 1.5em;">
+                                        <label class="form-check-label ms-2 fw-medium text-white" for="pumpSwitch">
                                             <?= $deviceStatus['water_pump']['state'] == 'ON' ? 'ON' : 'OFF' ?>
                                         </label>
                                     </div>
                                 </div>
-                                <small class="text-muted">
-                                    Triggered by: <?= $deviceStatus['water_pump']['triggered_by'] ? ucfirst($deviceStatus['water_pump']['triggered_by']) : 'Unknown' ?>
+                                <small class="text-white-50">
+                                    <i class="fas fa-history me-1"></i>
+                                    <?php if ($deviceStatus['water_pump']['last_updated']): ?>
+                                        <?= date('H:i', strtotime($deviceStatus['water_pump']['last_updated'])) ?>
+                                    <?php else: ?>
+                                        Never
+                                    <?php endif; ?>
+                                    <br>
+                                    <i class="fas fa-user me-1"></i>
+                                    <?= ucfirst($deviceStatus['water_pump']['triggered_by']) ?>
                                 </small>
                             </div>
+                        </div>
+                    </div>
+                </div>
+                
+                <!-- Auto Mode Status -->
+                <div class="mt-4 p-3 rounded bg-secondary">
+                    <h6 class="text-white mb-2">
+                        <i class="fas fa-robot me-2"></i>Auto Mode Status
+                    </h6>
+                    <div class="row">
+                        <div class="col-6">
+                            <small class="text-white-50">Oxygenator:</small><br>
+                            <span class="badge bg-<?= $autoModeStatus['oxygenator'] ? 'success' : 'secondary' ?>">
+                                <?= $autoModeStatus['oxygenator'] ? 'ENABLED' : 'DISABLED' ?>
+                            </span>
+                        </div>
+                        <div class="col-6">
+                            <small class="text-white-50">Water Pump:</small><br>
+                            <span class="badge bg-<?= $autoModeStatus['pump'] ? 'success' : 'secondary' ?>">
+                                <?= $autoModeStatus['pump'] ? 'ENABLED' : 'DISABLED' ?>
+                            </span>
                         </div>
                     </div>
                 </div>
@@ -265,22 +319,28 @@
 <?php
 $custom_scripts = "
 /* === GAUGE CHARTS CONFIGURATION === */
-function createGauge(chartId, value, min, max, color) {
+function createGauge(chartId, value, min, max, unit = '') {
     const ctx = document.getElementById(chartId).getContext('2d');
-
-    const gaugeColor = color; // Use passed color (matches chart line)
-
+    
+    // Determine color based on value
+    let color = '#28a745'; // Green (success)
+    if (value < min * 0.9 || value > max * 1.1) {
+        color = '#dc3545'; // Red (danger)
+    } else if (value < min || value > max) {
+        color = '#ffc107'; // Yellow (warning)
+    }
+    
     return new Chart(ctx, {
         type: 'doughnut',
         data: {
             datasets: [{
                 data: [value, max - value],
-                backgroundColor: [gaugeColor, '#053835ff'],
+                backgroundColor: [color, '#6c757d'], // Value color, background color
                 borderWidth: 0,
                 circumference: 180,
                 rotation: 270,
-                borderRadius: 10,
-                cutout: '80%'
+                borderRadius: 5,
+                cutout: '75%'
             }]
         },
         options: {
@@ -288,286 +348,232 @@ function createGauge(chartId, value, min, max, color) {
             maintainAspectRatio: false,
             plugins: {
                 legend: { display: false },
-                tooltip: { enabled: false }
+                tooltip: { 
+                    enabled: true,
+                    callbacks: {
+                        label: function(context) {
+                            return context.datasetIndex === 0 ? value + ' ' + unit : '';
+                        }
+                    }
+                }
             },
             animation: {
                 animateRotate: true,
-                animateScale: true
+                animateScale: false
             }
         }
     });
 }
 
 /* === INITIALIZE GAUGES === */
-// Pass the colors as you specified
-document.addEventListener('DOMContentLoaded', function() {";
+let tempGauge, phGauge, turbidityGauge;
 
+document.addEventListener('DOMContentLoaded', function() {";
 if ($currentReading):
     $custom_scripts .= "
-    createGauge('tempGauge', " . $currentReading['temperature'] . ",
-        " . $status['thresholds']['temp_min'] . ",
-        " . $status['thresholds']['temp_max'] . ",
-        '#6de5d9ff'  // gauge1 / line1
+    tempGauge = createGauge('tempGauge', " . $currentReading['temperature'] . ", 
+        " . $status['thresholds']['temp_min'] . ", 
+        " . $status['thresholds']['temp_max'] . ", 
+        '°C'
     );
-
-    createGauge('phGauge', " . $currentReading['ph_level'] . ",
-        " . $status['thresholds']['ph_min'] . ",
-        " . $status['thresholds']['ph_max'] . ",
-        '#249B87'  // gauge2 / line2
+    
+    phGauge = createGauge('phGauge', " . $currentReading['ph_level'] . ", 
+        " . $status['thresholds']['ph_min'] . ", 
+        " . $status['thresholds']['ph_max'] . "
     );
-
-    createGauge('turbidityGauge', " . $currentReading['turbidity'] . ",
-        0,
-        " . $status['thresholds']['turbidity_max'] . ",
-        '#13766B'  // gauge3 / line3
+    
+    turbidityGauge = createGauge('turbidityGauge', " . $currentReading['turbidity'] . ", 
+        0, 
+        " . $status['thresholds']['turbidity_max'] . ", 
+        'NTU'
     );";
 endif;
 
 $custom_scripts .= "
+    
+    // Initialize chart
+    initSensorChart();
 });
 
-/* === UPDATED LINE CHART CONFIG === */
-const chartData = " . $chartData . ";
-const ctx = document.getElementById('sensorChart').getContext('2d');
-const sensorChart = new Chart(ctx, {
-    type: 'line',
-    data: {
-        labels: chartData.labels,
-        datasets: [
-            {
-                label: 'Temperature (°C)',
-                data: chartData.temperature,
-                borderColor: '#60D1C6', // line1
-                fill: false,
-                borderWidth: 2,
-                tension: 0.3,
-                yAxisID: 'y'
+/* === SENSOR CHART === */
+function initSensorChart() {
+    const chartData = " . ($chartData ?: '{}') . ";
+    
+    if (!chartData.labels || chartData.labels.length === 0) {
+        console.log('No chart data available');
+        return;
+    }
+    
+    const ctx = document.getElementById('sensorChart').getContext('2d');
+    window.sensorChart = new Chart(ctx, {
+        type: 'line',
+        data: {
+            labels: chartData.labels,
+            datasets: [
+                {
+                    label: 'Temperature (°C)',
+                    data: chartData.temperature,
+                    borderColor: '#60D1C6',
+                    backgroundColor: 'rgba(96, 209, 198, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                },
+                {
+                    label: 'pH Level',
+                    data: chartData.ph,
+                    borderColor: '#2ab39c',
+                    backgroundColor: 'rgba(42, 179, 156, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y1'
+                },
+                {
+                    label: 'Turbidity (NTU)',
+                    data: chartData.turbidity,
+                    borderColor: '#0e5a51',
+                    backgroundColor: 'rgba(14, 90, 81, 0.1)',
+                    borderWidth: 2,
+                    tension: 0.4,
+                    fill: true,
+                    yAxisID: 'y'
+                }
+            ]
+        },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            plugins: {
+                legend: {
+                    labels: {
+                        color: '#ffffff',
+                        usePointStyle: true,
+                        padding: 20
+                    }
+                },
+                tooltip: {
+                    mode: 'index',
+                    intersect: false,
+                    backgroundColor: 'rgba(33, 37, 41, 0.9)',
+                    titleColor: '#FFFFFF',
+                    bodyColor: '#E5E7EB',
+                    borderColor: '#6c757d',
+                    borderWidth: 1
+                }
             },
-            {
-                label: 'pH Level',
-                data: chartData.ph,
-                borderColor: '#2ab39cff', // line2
-                fill: false,
-                borderWidth: 2,
-                tension: 0.3,
-                yAxisID: 'y1'
-            },
-            {
-                label: 'Turbidity (NTU)',
-                data: chartData.turbidity,
-                borderColor: '#0e5a51ff', // line3
-                fill: false,
-                borderWidth: 2,
-                tension: 0.3,
-                yAxisID: 'y'
-            }
-        ],
-    },
-    options: {
-        responsive: true,
-        maintainAspectRatio: false,
-        plugins: {
-            legend: {
-                labels: {
-                    color: '#ffffff',
-                    usePointStyle: true,
-                    padding: 20,
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif'
+            scales: {
+                x: {
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#ffffff',
+                        maxTicksLimit: 10
+                    }
+                },
+                y: {
+                    type: 'linear',
+                    display: true,
+                    position: 'left',
+                    grid: {
+                        color: 'rgba(255, 255, 255, 0.1)',
+                        drawBorder: false
+                    },
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    title: {
+                        display: true,
+                        text: 'Temperature / Turbidity',
+                        color: '#ffffff'
+                    }
+                },
+                y1: {
+                    type: 'linear',
+                    display: true,
+                    position: 'right',
+                    grid: {
+                        drawOnChartArea: false
+                    },
+                    ticks: {
+                        color: '#ffffff'
+                    },
+                    title: {
+                        display: true,
+                        text: 'pH Level',
+                        color: '#ffffff'
                     }
                 }
             },
-            tooltip: {
-                mode: 'index',
+            interaction: {
                 intersect: false,
-                backgroundColor: 'var(--bg-card)',
-                titleColor: '#FFFFFF',  // White title text
-                bodyColor: '#E5E7EB',
-                borderColor: 'var(--accent)',
-                borderWidth: 1,
-                padding: 12,
-                titleFont: {
-                    family: '\"Inter\", \"Segoe UI\", sans-serif',
-                    weight: '600',
-                    size: 13
-                },
-                bodyFont: {
-                    family: '\"Inter\", \"Segoe UI\", sans-serif',
-                    size: 12
-                },
-                callbacks: {
-                    label: function(context) {
-                        let label = context.dataset.label || '';
-                        if (label) {
-                            label += ': ';
-                        }
-                        if (context.parsed.y !== null) {
-                            // Format values based on dataset
-                            if (context.dataset.label.includes('Temperature')) {
-                                label += context.parsed.y.toFixed(1) + '°C';
-                            } else if (context.dataset.label.includes('pH')) {
-                                label += context.parsed.y.toFixed(2);
-                            } else if (context.dataset.label.includes('Turbidity')) {
-                                label += context.parsed.y.toFixed(0) + ' NTU';
-                            } else {
-                                label += context.parsed.y.toFixed(2);
-                            }
-                        }
-                        return label;
-                    }
-                }
+                mode: 'index'
             }
-        },
-        scales: {
-            x: {
-                grid: {
-                    color: 'rgba(158, 158, 158, 0.1)',
-                    drawBorder: false
-                },
-                ticks: {
-                    color: '#ffffff',
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif'
-                    }
-                }
-            },
-            y: {
-                type: 'linear',
-                display: true,
-                position: 'left',
-                grid: {
-                    color: 'rgba(158, 158, 158, 0.1)',
-                    drawBorder: false
-                },
-                ticks: {
-                    color: '#ffffff',
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'Temperature / Turbidity',
-                    color: '#ffffff',
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif',
-                        size: 12
-                    }
-                }
-            },
-            y1: {
-                type: 'linear',
-                display: true,
-                position: 'right',
-                grid: {
-                    drawOnChartArea: false
-                },
-                ticks: {
-                    color: '#ffffff',
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif'
-                    }
-                },
-                title: {
-                    display: true,
-                    text: 'pH Level',
-                    color: '#ffffff',
-                    font: {
-                        family: '\"Inter\", \"Segoe UI\", sans-serif',
-                        size: 12
-                    }
-                }
-            }
-        },
-        interaction: {
-            intersect: false,
-            mode: 'index'
         }
-    }
-});
-
-/* === HELPER FUNCTIONS === */
-function updateGauge(chartId, value, min, max) {
-    const chart = Chart.getChart(chartId);
-    if (chart) {
-        chart.data.datasets[0].data = [value, max - value];
-        
-        // Update color based on value
-        if (value < min || value > max) {
-            chart.data.datasets[0].backgroundColor[0] = '#F85149'; // danger
-        } else {
-            chart.data.datasets[0].backgroundColor[0] = '#45B7A4'; // accent verdigris
-        }
-        
-        chart.update('active');
-    }
+    });
 }
 
-/* === UPDATED REFRESH FUNCTION FOR GAUGES === */
+/* === UPDATE GAUGE FUNCTION === */
+function updateGauge(gauge, value, min, max, unit = '') {
+    if (!gauge) return;
+    
+    let color = '#28a745'; // Green
+    if (value < min * 0.9 || value > max * 1.1) {
+        color = '#dc3545'; // Red
+    } else if (value < min || value > max) {
+        color = '#ffc107'; // Yellow
+    }
+    
+    gauge.data.datasets[0].data = [value, max - value];
+    gauge.data.datasets[0].backgroundColor[0] = color;
+    gauge.update();
+    
+    return color;
+}
+
+/* === REFRESH DATA FUNCTION === */
 function refreshData() {
     $.ajax({
         url: '" . base_url('dashboard/get-current-data') . "',
         method: 'GET',
+        dataType: 'json',
         success: function(response) {
-            if (response.success) {
+            if (response.success && response.currentReading) {
                 // Update gauges
-                if (response.currentReading) {
-                    // Temperature
-                    updateGauge(
-                        'tempGauge',
-                        response.currentReading.temperature,
-                        response.status.thresholds.temp_min,
-                        response.status.thresholds.temp_max
-                    );
-                    
-                    // pH Level
-                    updateGauge(
-                        'phGauge',
-                        response.currentReading.ph_level,
-                        response.status.thresholds.ph_min,
-                        response.status.thresholds.ph_max
-                    );
-                    
-                    // Turbidity
-                    updateGauge(
-                        'turbidityGauge',
-                        response.currentReading.turbidity,
-                        0,
-                        response.status.thresholds.turbidity_max
-                    );
-                    
-                    // Update gauge values display
-                    document.querySelector('#tempGauge').nextElementSibling.querySelector('.gauge-primary-value').textContent = 
-                        response.currentReading.temperature.toFixed(1);
-                    document.querySelector('#phGauge').nextElementSibling.querySelector('.gauge-primary-value').textContent = 
-                        response.currentReading.ph_level.toFixed(2);
-                    document.querySelector('#turbidityGauge').nextElementSibling.querySelector('.gauge-primary-value').textContent = 
-                        response.currentReading.turbidity.toFixed(0);
-                    
-                    // Update status badges
-                    updateStatusBadge('temperature', response.currentReading.temperature, response.status.thresholds.temp_min, response.status.thresholds.temp_max);
-                    updateStatusBadge('ph', response.currentReading.ph_level, response.status.thresholds.ph_min, response.status.thresholds.ph_max);
-                    updateStatusBadge('turbidity', response.currentReading.turbidity, 0, response.status.thresholds.turbidity_max);
-                }
+                const tempColor = updateGauge(tempGauge, response.currentReading.temperature, 
+                    response.status.thresholds.temp_min, response.status.thresholds.temp_max, '°C');
                 
-                // Update device status (existing logic)
+                const phColor = updateGauge(phGauge, response.currentReading.ph_level,
+                    response.status.thresholds.ph_min, response.status.thresholds.ph_max);
+                
+                const turbColor = updateGauge(turbidityGauge, response.currentReading.turbidity,
+                    0, response.status.thresholds.turbidity_max, 'NTU');
+                
+                // Update gauge text values
+                $('#tempGauge').closest('.gauge-container').find('.gauge-primary-value').text(
+                    response.currentReading.temperature.toFixed(1)
+                );
+                $('#phGauge').closest('.gauge-container').find('.gauge-primary-value').text(
+                    response.currentReading.ph_level.toFixed(2)
+                );
+                $('#turbidityGauge').closest('.gauge-container').find('.gauge-primary-value').text(
+                    response.currentReading.turbidity.toFixed(0)
+                );
+                
+                // Update status badges
+                updateStatusBadge('temperature', response.currentReading.temperature, 
+                    response.status.thresholds.temp_min, response.status.thresholds.temp_max);
+                updateStatusBadge('ph', response.currentReading.ph_level, 
+                    response.status.thresholds.ph_min, response.status.thresholds.ph_max);
+                updateStatusBadge('turbidity', response.currentReading.turbidity, 
+                    0, response.status.thresholds.turbidity_max);
+                
+                // Update device status
                 if (response.deviceStatus) {
-                    const oxyState = response.deviceStatus.oxygenator.state;
-                    const pumpState = response.deviceStatus.water_pump.state;
-                    
-                    $('#oxySwitch').prop('checked', oxyState === 'ON');
-                    $('#oxySwitch').next('label').text(oxyState);
-                    
-                    $('#pumpSwitch').prop('checked', pumpState === 'ON');
-                    $('#pumpSwitch').next('label').text(pumpState);
-                    
-                    $('.device-card').each(function() {
-                        const device = \$(this).find('.card-title').text().trim().toLowerCase();
-                        const state = device.includes('oxygenator') ? oxyState : pumpState;
-                        
-                        \$(this).removeClass('device-on device-off')
-                               .addClass(state === 'ON' ? 'device-on' : 'device-off');
-                    });
+                    updateDeviceStatus(response.deviceStatus);
                 }
                 
                 // Update alert badge
@@ -578,61 +584,70 @@ function refreshData() {
                 }
             }
         },
-        error: function() {
-            console.log('Error refreshing data');
+        error: function(xhr, status, error) {
+            console.error('Error refreshing data:', error);
         }
     });
 }
 
 function updateStatusBadge(type, value, min, max) {
-    const gaugeElement = document.querySelector('#' + type + 'Gauge').closest('.card-body');
-    const badgeElement = gaugeElement.querySelector('.gauge-status .badge');
+    const card = $('#' + type + 'Gauge').closest('.card');
+    const badge = card.find('.gauge-status .badge');
     
-    if (!badgeElement) return;
+    badge.removeClass('bg-success bg-warning bg-danger');
     
-    badgeElement.className = 'badge ';
-    
-    if (type === 'ph') {
+    if (type === 'temperature') {
         if (value < min) {
-            badgeElement.textContent = 'Acidic';
-            badgeElement.classList.add('bg-danger');
+            badge.text('Low').addClass('bg-warning');
         } else if (value > max) {
-            badgeElement.textContent = 'Alkaline';
-            badgeElement.classList.add('bg-danger');
+            badge.text('High').addClass('bg-danger');
         } else {
-            badgeElement.textContent = 'Normal';
-            badgeElement.classList.add('status-badge');
+            badge.text('Normal').addClass('bg-success');
+        }
+    } else if (type === 'ph') {
+        if (value < min) {
+            badge.text('Acidic').addClass('bg-danger');
+        } else if (value > max) {
+            badge.text('Alkaline').addClass('bg-danger');
+        } else {
+            badge.text('Normal').addClass('bg-success');
         }
     } else if (type === 'turbidity') {
         if (value > max) {
-            badgeElement.textContent = 'High';
-            badgeElement.classList.add('bg-danger');
+            badge.text('High').addClass('bg-danger');
         } else {
-            badgeElement.textContent = 'Normal';
-            badgeElement.classList.add('status-badge');
-        }
-    } else {
-        if (value < min) {
-            badgeElement.textContent = 'Low';
-            badgeElement.classList.add('bg-warning');
-        } else if (value > max) {
-            badgeElement.textContent = 'High';
-            badgeElement.classList.add('bg-danger');
-        } else {
-            badgeElement.textContent = 'Normal';
-            badgeElement.classList.add('status-badge');
+            badge.text('Normal').addClass('bg-success');
         }
     }
 }
 
-// Keep all existing AJAX and control functions unchanged
-function controlDevice(device, action) {
-    console.log('Attempting to control: ' + device + ' -> ' + action);
+function updateDeviceStatus(deviceStatus) {
+    // Update oxygenator
+    const oxyState = deviceStatus.oxygenator.state;
+    $('#oxySwitch').prop('checked', oxyState === 'ON');
+    $('#oxySwitch').next('label').text(oxyState === 'ON' ? 'ON' : 'OFF');
+    $('#oxySwitch').closest('.card').removeClass('border-success border-secondary')
+        .addClass(oxyState === 'ON' ? 'border-success' : 'border-secondary');
+    $('#oxySwitch').closest('.card').find('.fa-wind').removeClass('text-success text-secondary')
+        .addClass(oxyState === 'ON' ? 'text-success' : 'text-secondary');
     
-    const button = event ? event.target.closest('button') : null;
+    // Update water pump
+    const pumpState = deviceStatus.water_pump.state;
+    $('#pumpSwitch').prop('checked', pumpState === 'ON');
+    $('#pumpSwitch').next('label').text(pumpState === 'ON' ? 'ON' : 'OFF');
+    $('#pumpSwitch').closest('.card').removeClass('border-success border-secondary')
+        .addClass(pumpState === 'ON' ? 'border-success' : 'border-secondary');
+    $('#pumpSwitch').closest('.card').find('.fa-tint').removeClass('text-success text-secondary')
+        .addClass(pumpState === 'ON' ? 'text-success' : 'text-secondary');
+}
+
+/* === DEVICE CONTROL === */
+function controlDevice(device, action) {
+    const button = event ? event.target : null;
+    const originalHTML = button ? button.innerHTML : null;
+    
     if (button) {
-        const originalText = button.innerHTML;
-        button.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i> Processing...';
+        button.innerHTML = '<i class=\"fas fa-spinner fa-spin\"></i>';
         button.disabled = true;
     }
     
@@ -644,71 +659,71 @@ function controlDevice(device, action) {
             action: action,
             csrf_test_name: $('meta[name=\"csrf-token\"]').attr('content')
         },
+        dataType: 'json',
         success: function(response) {
-            console.log('Server response:', response);
-            
             if (response.success) {
-                showAlert('success', response.message);
-                updateDeviceUI(device, action);
+                showToast('success', response.message);
                 refreshData();
             } else {
-                showAlert('error', 'Error: ' + response.message);
-            }
-            
-            if (button) {
-                button.innerHTML = originalText;
-                button.disabled = false;
+                showToast('error', response.message || 'Unknown error');
+                // Revert switch state if failed
+                const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
+                $('#' + switchId).prop('checked', !$('#' + switchId).prop('checked'));
             }
         },
         error: function(xhr, status, error) {
-            console.error('AJAX Error:', error);
-            showAlert('error', 'Network error. Check console for details.');
-            
+            showToast('error', 'Network error: ' + error);
+            // Revert switch state
+            const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
+            $('#' + switchId).prop('checked', !$('#' + switchId).prop('checked'));
+        },
+        complete: function() {
             if (button) {
-                button.innerHTML = originalText;
+                button.innerHTML = originalHTML;
                 button.disabled = false;
             }
         }
     });
 }
 
-function showAlert(type, message) {
-    const alertDiv = document.createElement('div');
-    alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show position-fixed';
-    alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-    alertDiv.innerHTML = `
-        <strong>\${type === 'success' ? 'Success!' : 'Error!'}</strong> \${message}
-        <button type=\"button\" class=\"btn-close\" data-bs-dismiss=\"alert\"></button>
-    `;
+function showToast(type, message) {
+    const toast = document.createElement('div');
+    toast.className = 'toast align-items-center text-white bg-' + type + ' border-0';
+    toast.setAttribute('role', 'alert');
+    toast.setAttribute('aria-live', 'assertive');
+    toast.setAttribute('aria-atomic', 'true');
+    toast.style.position = 'fixed';
+    toast.style.bottom = '20px';
+    toast.style.right = '20px';
+    toast.style.zIndex = '9999';
     
-    document.body.appendChild(alertDiv);
+    toast.innerHTML = \`
+        <div class=\"d-flex\">
+            <div class=\"toast-body\">
+                <i class=\"fas \${type === 'success' ? 'fa-check-circle' : 'fa-exclamation-circle'} me-2\"></i>
+                \${message}
+            </div>
+            <button type=\"button\" class=\"btn-close btn-close-white me-2 m-auto\" data-bs-dismiss=\"toast\"></button>
+        </div>
+    \`;
     
-    setTimeout(() => {
-        alertDiv.remove();
-    }, 5000);
-}
-
-function updateDeviceUI(device, action) {
-    const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
-    const switchElement = document.getElementById(switchId);
-    if (switchElement) {
-        switchElement.checked = action === 'on';
-    }
+    document.body.appendChild(toast);
     
-    const card = document.querySelector('.device-card:contains(' + (device === 'oxygenator' ? 'Oxygenator' : 'Water Pump') + ')');
-    if (card) {
-        card.classList.remove('device-on', 'device-off');
-        card.classList.add(action === 'on' ? 'device-on' : 'device-off');
-    }
+    const bsToast = new bootstrap.Toast(toast);
+    bsToast.show();
+    
+    toast.addEventListener('hidden.bs.toast', function() {
+        toast.remove();
+    });
 }
 
 // Auto-refresh every 10 seconds
 setInterval(refreshData, 10000);
 
-// Initial refresh
-// \$(document).ready(function() {
-//     refreshData();
-// });
+// Initial load
+$(document).ready(function() {
+    refreshData();
+});
 ";
 ?>
 

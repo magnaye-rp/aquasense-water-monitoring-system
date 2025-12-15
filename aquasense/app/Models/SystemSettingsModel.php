@@ -25,7 +25,7 @@ class SystemSettingsModel extends Model
         'temperature_range'
     ];
 
-    protected $useTimestamps = false;
+    protected $useTimestamps = true;
     protected $createdField  = 'created_at';
     protected $updatedField  = 'updated_at';
 

@@ -41,6 +41,13 @@
 
         --border-color: #30363D;
         --chart-grid: rgba(139, 148, 158, 0.1);
+        
+        /* Bootstrap color overrides */
+        --bs-primary: #45B7A4;
+        --bs-success: #28a745;
+        --bs-warning: #ffc107;
+        --bs-danger: #dc3545;
+        --bs-secondary: #6c757d;
     }
 
     /* ===============================
@@ -49,7 +56,8 @@
     body {
         background-color: var(--bg-page);
         color: var(--text-primary);
-        font-family: 'Inter', 'Segoe UI', sans-serif;
+        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+        min-height: 100vh;
     }
 
     .text-muted {
@@ -62,44 +70,60 @@
     .navbar {
         background-color: #0B1117 !important;
         border-bottom: 1px solid var(--border-subtle);
+        padding: 0.75rem 0;
     }
 
     .navbar-brand {
-        color: var(--accent) !important;  /* Changed to Verdigris */
+        color: var(--accent) !important;
         font-weight: 600;
+        font-size: 1.25rem;
     }
 
     .nav-link {
-        color: #FFFFFF !important;  /* Changed to white */
+        color: var(--text-secondary) !important;
+        padding: 0.5rem 1rem !important;
+        border-radius: 6px;
+        margin: 0 0.25rem;
+        transition: all 0.2s ease;
+    }
+
+    .nav-link:hover {
+        color: var(--text-primary) !important;
+        background-color: var(--bg-muted);
     }
 
     .nav-link.active {
-        color: var(--accent) !important;  /* Changed to Verdigris */
+        color: var(--text-primary) !important;
         background-color: var(--accent-soft);
-        border-radius: 8px;
-        font-weight: 600;
+        font-weight: 500;
     }
 
     /* ===============================
     CARDS
     =============================== */
     .card {
-        background-color: #00000082; /* dark verdigris-ish card bg */
-        border: 1px solid #ffffffff;
-        border-radius: 14px;
-        color: #E5F0EF; /* bright text */
-        transition: background-color 0.3s ease;
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        border-radius: 8px;
+        color: var(--text-primary);
+        transition: transform 0.2s ease, box-shadow 0.2s ease;
     }
 
     .card:hover {
-        background-color: #122725; /* slightly lighter verdigris on hover */
+        transform: translateY(-2px);
+        box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
     }
 
     .card-header {
-        background-color: transparent;
+        background-color: rgba(0, 0, 0, 0.2);
         border-bottom: 1px solid var(--border-subtle);
-        color: #FFFFFF;  /* Changed to white */
+        color: var(--text-primary);
         font-weight: 500;
+        padding: 0.75rem 1rem;
+    }
+
+    .card-body {
+        padding: 1rem;
     }
 
     /* ===============================
@@ -107,50 +131,43 @@
     =============================== */
     .status-banner {
         border-left: 4px solid var(--ok);
+        background: linear-gradient(90deg, rgba(63, 185, 80, 0.1), transparent);
     }
 
     .status-banner.warning {
         border-left-color: var(--warn);
+        background: linear-gradient(90deg, rgba(210, 153, 34, 0.1), transparent);
     }
 
     .status-banner.danger {
         border-left-color: var(--danger);
+        background: linear-gradient(90deg, rgba(248, 81, 73, 0.1), transparent);
     }
 
-    .status-badge {
-        background-color: rgba(96, 209, 198, 0.15); /* slightly transparent */
-        color: #60D1C6; /* bright verdigris */
-        border-radius: 8px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.85rem;
-        border: none;
+    .status-banner.secondary {
+        border-left-color: var(--text-secondary);
+        background: linear-gradient(90deg, rgba(139, 148, 158, 0.1), transparent);
     }
 
-    .status-badge.warning {
-        background-color: rgba(255, 193, 7, 0.15);
-        color: #FFC107; /* yellow */
-         border-radius: 8px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.85rem;
-        border: none;
+    .badge {
+        font-weight: 500;
+        padding: 0.35em 0.65em;
     }
 
-    .status-badge.danger {
-        background-color: rgba(248, 81, 73, 0.15);
-        color: #F85149; /* red */
-         border-radius: 8px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.85rem;
-        border: none;
+    .bg-success {
+        background-color: var(--ok) !important;
     }
-    
-    .status-badge.secondary {
-        background-color: rgba(108, 117, 125, 0.15);
-        color: #6C757D; /* gray */
-        border-radius: 8px;
-        padding: 0.15rem 0.5rem;
-        font-size: 0.85rem;
-        border: none;
+
+    .bg-warning {
+        background-color: var(--warn) !important;
+    }
+
+    .bg-danger {
+        background-color: var(--danger) !important;
+    }
+
+    .bg-secondary {
+        background-color: var(--text-secondary) !important;
     }
 
     /* ===============================
@@ -159,11 +176,16 @@
     .gauge-container {
         position: relative;
         height: 150px;
-        max-width: 220px;
-        margin: 0 auto;
+        width: 100%;
         display: flex;
         flex-direction: column;
         align-items: center;
+        justify-content: center;
+    }
+
+    canvas {
+        max-width: 100% !important;
+        height: auto !important;
     }
 
     .gauge-value {
@@ -172,50 +194,42 @@
         left: 50%;
         transform: translate(-50%, -50%);
         text-align: center;
-        width: 100%;
-        pointer-events: none;
         z-index: 1;
     }
 
     .gauge-primary-value {
-        font-size: 1.8rem;
+        font-size: 2rem;
         font-weight: 700;
-        line-height: 1.1;
-        color: #E5F0EF; /* bright text */
+        line-height: 1.2;
+        color: var(--text-primary);
     }
 
     .gauge-unit,
     .gauge-threshold {
         font-size: 0.85rem;
-        color: rgba(229, 240, 239, 0.7); /* slightly muted bright text */
+        color: var(--text-secondary);
     }
 
     .gauge-threshold {
+        margin-top: 0.5rem;
         text-align: center;
-        margin-top: 10px;
-        width: 100%;
-        position: absolute;
-        bottom: 0;
-        left: 0;
     }
 
     /* ===============================
     DEVICE CONTROL
     =============================== */
-    .device-card.device-on {
-        border-left: 4px solid var(--accent);
+    .device-card {
+        cursor: pointer;
+        transition: all 0.2s ease;
     }
 
-    .device-card.device-off {
-        border-left: 4px solid var(--border-subtle);
+    .device-card:hover {
+        border-color: var(--accent) !important;
     }
 
     .device-icon {
-        color: var(--accent);
-    }
-
-    .device-off .device-icon {
-        color: var(--text-muted);
+        font-size: 2rem;
+        margin-bottom: 0.5rem;
     }
 
     .form-check-input:checked {
@@ -223,22 +237,28 @@
         border-color: var(--accent);
     }
 
+    .form-check-input {
+        width: 2.5em !important;
+        height: 1.25em !important;
+    }
+
     /* ===============================
     CHART CONTAINER
     =============================== */
     .chart-container {
         height: 300px;
+        position: relative;
     }
 
     /* ===============================
     LISTS / ALERTS
     =============================== */
     .alert-item {
-        border-left: 4px solid var(--border-subtle);
-        padding: 0.5rem 1rem;
-        border-radius: 8px;
-        background-color: var(--bg-muted);
-        color: var(--text-primary);
+        border-left: 3px solid var(--border-subtle);
+        padding: 0.75rem;
+        margin-bottom: 0.5rem;
+        background-color: var(--bg-card);
+        border-radius: 6px;
     }
 
     .alert-item.danger {
@@ -248,11 +268,151 @@
     .alert-item.warning {
         border-left-color: var(--warn);
     }
+
+    /* ===============================
+    TABLES
+    =============================== */
+    .table {
+        color: var(--text-primary);
+        background-color: var(--bg-card);
+    }
+
+    .table thead th {
+        border-bottom: 2px solid var(--border-subtle);
+        color: var(--text-secondary);
+        font-weight: 600;
+        background-color: rgba(0, 0, 0, 0.1);
+    }
+
+    .table tbody td {
+        border-color: var(--border-subtle);
+        background-color: transparent;
+    }
+
+    .table-hover tbody tr:hover {
+        background-color: var(--accent-soft) !important;
+    }
+
+    /* ===============================
+    BUTTONS
+    =============================== */
+    .btn {
+        border-radius: 6px;
+        font-weight: 500;
+        padding: 0.375rem 0.75rem;
+    }
+
+    .btn-outline-primary {
+        color: var(--accent);
+        border-color: var(--accent);
+    }
+
+    .btn-outline-primary:hover {
+        background-color: var(--accent);
+        border-color: var(--accent);
+        color: white;
+    }
+
+    .btn-outline-secondary {
+        color: var(--text-secondary);
+        border-color: var(--border-subtle);
+    }
+
+    .btn-outline-secondary:hover {
+        background-color: var(--bg-muted);
+        border-color: var(--border-subtle);
+        color: var(--text-primary);
+    }
+
+    /* ===============================
+    FORM CONTROLS
+    =============================== */
+    .form-control,
+    .form-select {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+    }
+
+    .form-control:focus,
+    .form-select:focus {
+        background-color: var(--bg-card);
+        border-color: var(--accent);
+        color: var(--text-primary);
+        box-shadow: 0 0 0 0.2rem rgba(69, 183, 164, 0.25);
+    }
+
+    .form-control::placeholder {
+        color: var(--text-muted);
+    }
+
+    .input-group-text {
+        background-color: var(--bg-muted);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-secondary);
+    }
+
+    /* ===============================
+    MODALS
+    =============================== */
+    .modal-content {
+        background-color: var(--bg-card);
+        border: 1px solid var(--border-subtle);
+        color: var(--text-primary);
+    }
+
+    .modal-header {
+        border-bottom: 1px solid var(--border-subtle);
+    }
+
+    .modal-footer {
+        border-top: 1px solid var(--border-subtle);
+    }
+
+    .btn-close {
+        filter: invert(1) grayscale(100%) brightness(200%);
+    }
+
+    /* ===============================
+    RESPONSIVE
+    =============================== */
+    @media (max-width: 768px) {
+        .gauge-primary-value {
+            font-size: 1.5rem;
+        }
+        
+        .card-body {
+            padding: 0.75rem;
+        }
+        
+        .navbar-nav {
+            padding-top: 0.5rem;
+        }
+    }
+    </style>
+
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/buttons/2.3.6/css/buttons.bootstrap5.min.css">
+    <link rel="stylesheet" type="text/css" href="https://cdn.datatables.net/responsive/2.4.1/css/responsive.bootstrap5.min.css">
+    
+    <!-- Loading indicator for DataTables -->
+    <style>
+    .dataTables_processing {
+        top: 50% !important;
+        left: 50% !important;
+        transform: translate(-50%, -50%);
+        width: 200px !important;
+        margin-left: -100px !important;
+        margin-top: -26px !important;
+        text-align: center;
+        padding: 1em 0;
+        z-index: 1000;
+    }
     </style>
 </head>
 <body>
     <!-- Navigation -->
-    <nav class="navbar navbar-expand-lg navbar-light">
+    <nav class="navbar navbar-expand-lg navbar-dark">
         <div class="container-fluid">
             <a class="navbar-brand" href="<?= base_url('dashboard') ?>">
                 <i class="fas fa-tint me-2"></i>
@@ -294,13 +454,14 @@
                 </ul>
                 <div class="navbar-nav">
                     <div class="nav-item dropdown">
-                        <a class="nav-link dropdown-toggle" href="#" id="userDropdown" data-bs-toggle="dropdown">
-                            <i class="fas fa-user-circle me-2"></i> <?= $user->username ?? 'User' ?>
+                        <a class="nav-link dropdown-toggle d-flex align-items-center" href="#" id="userDropdown" data-bs-toggle="dropdown">
+                            <i class="fas fa-user-circle me-2"></i>
+                            <span><?= esc($user->username ?? 'User') ?></span>
                         </a>
                         <ul class="dropdown-menu dropdown-menu-end">
                             <li><a class="dropdown-item" href="#"><i class="fas fa-user me-2"></i> Profile</a></li>
                             <li><hr class="dropdown-divider"></li>
-                            <li><a class="dropdown-item" href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
+                            <li><a class="dropdown-item text-danger" href="<?= base_url('logout') ?>"><i class="fas fa-sign-out-alt me-2"></i> Logout</a></li>
                         </ul>
                     </div>
                 </div>
@@ -309,4 +470,4 @@
     </nav>
 
     <!-- Main Content Container -->
-    <div class="container-fluid mt-4">
+    <div class="container-fluid mt-4 px-3 px-lg-4">

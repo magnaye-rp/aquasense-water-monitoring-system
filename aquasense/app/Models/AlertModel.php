@@ -14,9 +14,10 @@ class AlertModel extends Model
     protected $allowedFields = [
         'type',
         'message',
-        'level',      // Added 'level' field
+        'level',     
         'created_at',
-        'is_read'     // Added 'is_read' field
+        'is_read',
+        'device_id'  
     ];
 
     protected $useTimestamps = false;
@@ -29,12 +30,13 @@ class AlertModel extends Model
      * @param string $level Alert level (info, warning, danger)
      * @return int|bool Insert ID or false on failure
      */
-    public function createAlert($type, $message, $level = 'info')
+    public function createAlert($type, $message, $level = 'info', $deviceId = null)
     {
         return $this->insert([
             'type' => $type,
             'message' => $message,
             'level' => $level,
+            'device_id' => $deviceId,  // Add this
             'created_at' => date('Y-m-d H:i:s'),
             'is_read' => 0
         ]);
