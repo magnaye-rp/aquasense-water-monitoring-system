@@ -45,22 +45,11 @@ class ApiController extends BaseController
 
         $commandCheck = $this->request->getPost('command_check') ?? 0;
 
-        if ($commandCheck == 1) {
-            // Just check for commands, don't save sensor data
-            log_message('debug', 'Command check request from device');
-            // Return pending commands only
-        } else {
-            // Full sensor data - save to database
-            $this->sensorReadingModel->insert($sensorData);
-            // Check for alerts
-            // Process auto mode
-        }
-
         // Log for debugging
         log_message('debug', '=== API REQUEST START ===');
         log_message('debug', 'API Key: ' . ($apiKey ?? 'none'));
 
-        // Validate API key
+        // Validate API key FIRST
         if (!$this->validateApiKey($apiKey)) {
             log_message('debug', 'API Key validation failed');
             return $this->failUnauthorized('Invalid API key');
@@ -88,24 +77,31 @@ class ApiController extends BaseController
             'created_at' => date('Y-m-d H:i:s')
         ];
 
-        try {
-            // Save sensor reading
-            $this->sensorReadingModel->insert($sensorData);
-            log_message('debug', '✅ Sensor data saved to database. ID: ' . $this->sensorReadingModel->getInsertID());
+        // Now handle the command check logic
+        if ($commandCheck == 1) {
+            // Just check for commands, don't save sensor data
+            log_message('debug', 'Command check request from device - skipping sensor data save');
+        } else {
+            // Full sensor data - save to database
+            try {
+                $this->sensorReadingModel->insert($sensorData);
+                log_message('debug', '✅ Sensor data saved to database. ID: ' . $this->sensorReadingModel->getInsertID());
 
-            // Check for alerts
-            $thresholds = $this->systemSettingsModel->getThresholds();
-            $this->alertModel->createSensorAlert($sensorData, $thresholds);
-            
-        } catch (\Exception $e) {
-            log_message('error', '❌ Failed to save sensor data: ' . $e->getMessage());
+                // Check for alerts
+                $thresholds = $this->systemSettingsModel->getThresholds();
+                $this->alertModel->createSensorAlert($sensorData, $thresholds);
+                
+            } catch (\Exception $e) {
+                log_message('error', '❌ Failed to save sensor data: ' . $e->getMessage());
+            }
         }
 
         // AUTO MODE PROCESSING
         $autoCommands = [];
         $autoModeEnabled = ($autoMode == '1' || $autoMode == 1);
         
-        if ($autoModeEnabled) {
+        // Only process auto mode if we have sensor data (not command check only)
+        if ($autoModeEnabled && $commandCheck != 1) {
             try {
                 log_message('debug', '🚀 Processing AUTO MODE...');
                 $autoCommands = $this->autoModeService->processAutoMode($sensorData, $deviceId);
@@ -118,6 +114,27 @@ class ApiController extends BaseController
                 }
             } catch (\Exception $e) {
                 log_message('error', '❌ Auto mode processing failed: ' . $e->getMessage());
+            }
+        }
+
+        if (!empty($autoCommands)) {
+            foreach ($autoCommands as $deviceName => $command) {
+                if ($deviceName === 'oxygenator') {
+                    $commands['oxygenator'] = ($command === 'ON') ? 1 : 0;
+                }
+                if ($deviceName === 'water_pump') {
+                    $commands['water_pump'] = ($command === 'ON') ? 1 : 0;
+                }
+            }
+            
+            // Also add these as pending commands for persistence
+            foreach ($autoCommands as $deviceName => $command) {
+                $this->deviceCommandModel->addCommand(
+                    $deviceName, 
+                    strtoupper($command), 
+                    $deviceId,
+                    'auto' // Source
+                );
             }
         }
 
