@@ -1,437 +1,7 @@
-<?= $this->include('layout/header') ?>
 
-    <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+<?= $this->extend('layout/header') ?>
 
-        body {
-            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #2d5a5a 0%, #1a3a3a 50%, #0f2626 100%);
-            min-height: 100vh;
-            overflow-x: hidden;
-        }
-
-        /* Animated background elements */
-        .bg-elements {
-            position: fixed;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-            overflow: hidden;
-            z-index: 1;
-        }
-
-        .water-bubble {
-            position: absolute;
-            background: radial-gradient(circle at 30% 30%, rgba(78, 172, 155, 0.15), transparent);
-            border-radius: 50%;
-            opacity: 0.5;
-            animation: float 6s infinite ease-in-out;
-        }
-
-        @keyframes float {
-            0%, 100% { transform: translateY(0) translateX(0); }
-            50% { transform: translateY(-20px) translateX(10px); }
-        }
-
-        @keyframes glow {
-            0%, 100% { opacity: 0.3; }
-            50% { opacity: 0.8; }
-        }
-
-        .glow-line {
-            position: absolute;
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #4eac9b, transparent);
-            animation: glow 3s infinite;
-        }
-
-        @keyframes rise {
-            0% {
-                opacity: 0;
-                transform: translateY(100vh) translateX(0);
-            }
-            10% {
-                opacity: 1;
-            }
-            90% {
-                opacity: 1;
-            }
-            100% {
-                opacity: 0;
-                transform: translateY(-100vh) translateX(100px);
-            }
-        }
-
-        .bubble {
-            position: absolute;
-            bottom: 0;
-            border-radius: 50%;
-            background: radial-gradient(circle at 30% 30%, rgba(159, 219, 205, 0.4), rgba(78, 172, 155, 0.1));
-            border: 1px solid rgba(78, 172, 155, 0.2);
-            animation: rise linear infinite;
-        }
-
-        .bubble::before {
-            content: '';
-            position: absolute;
-            top: 10%;
-            left: 15%;
-            width: 30%;
-            height: 30%;
-            background: radial-gradient(circle at center, rgba(255, 255, 255, 0.8), transparent);
-            border-radius: 50%;
-        }
-
-        /* Sidebar Styles */
-        .sidebar {
-            position: fixed;
-            left: 0;
-            top: 0;
-            height: 100vh;
-            width: 280px;
-            background: linear-gradient(135deg, rgba(78, 172, 155, 0.1) 0%, rgba(45, 90, 90, 0.2) 100%);
-            border-right: 2px solid #4eac9b;
-            z-index: 1050;
-            transition: all 0.4s ease;
-            overflow-y: auto;
-            padding: 20px;
-        }
-
-        .sidebar.collapsed {
-            width: 100px;
-        }
-
-        .sidebar-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 30px;
-            padding-bottom: 20px;
-            border-bottom: 2px solid rgba(78, 172, 155, 0.3);
-        }
-
-        .sidebar-logo {
-            display: flex;
-            align-items: center;
-            gap: 12px;
-            transition: all 0.3s ease;
-        }
-
-        .sidebar.collapsed .sidebar-logo {
-            justify-content: center;
-            width: 100%;
-        }
-
-        .logo-svg {
-            width: 45px;
-            height: 45px;
-        }
-
-        .logo-text {
-            color: #4eac9b;
-            font-weight: 700;
-            font-size: 1.3rem;
-            white-space: nowrap;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .logo-text {
-            opacity: 0;
-            width: 0;
-            display: none;
-        }
-
-        .toggle-btn {
-            background: linear-gradient(135deg, #4eac9b 0%, #2d8f7f 100%);
-            border: none;
-            color: white;
-            width: 40px;
-            height: 40px;
-            border-radius: 8px;
-            cursor: pointer;
-            display: flex;
-            align-items: center;
-            justify-content: center;
-            transition: all 0.3s ease;
-            font-size: 1.1rem;
-        }
-
-        .toggle-btn:hover {
-            box-shadow: 0 5px 15px rgba(78, 172, 155, 0.3);
-            transform: scale(1.05);
-        }
-
-        .sidebar.collapsed .toggle-btn {
-            width: 100%;
-        }
-
-        /* Navigation Menu */
-        .nav-menu {
-            list-style: none;
-            margin: 0;
-            padding: 0;
-        }
-
-        .nav-item {
-            margin-bottom: 10px;
-        }
-
-        .nav-link {
-            display: flex;
-            align-items: center;
-            gap: 15px;
-            padding: 12px 15px;
-            color: #b0c4be;
-            text-decoration: none;
-            border-radius: 10px;
-            transition: all 0.3s ease;
-            white-space: nowrap;
-        }
-
-        .nav-link:hover {
-            background: rgba(78, 172, 155, 0.2);
-            color: #4eac9b;
-            padding-left: 20px;
-        }
-
-        .nav-link.active {
-            background: linear-gradient(135deg, rgba(78, 172, 155, 0.3) 0%, rgba(45, 90, 90, 0.3) 100%);
-            color: #4eac9b;
-            border-left: 4px solid #4eac9b;
-            padding-left: 11px;
-        }
-
-        .nav-icon {
-            min-width: 24px;
-            font-size: 1.2rem;
-            color: #ffd700;
-        }
-
-        .nav-text {
-            flex: 1;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .nav-text {
-            opacity: 0;
-            width: 0;
-            display: none;
-        }
-
-        /* Section Title */
-        .nav-section-title {
-            color: #4eac9b;
-            font-size: 0.75rem;
-            text-transform: uppercase;
-            letter-spacing: 1px;
-            margin-top: 25px;
-            margin-bottom: 12px;
-            padding: 0 15px;
-            font-weight: 700;
-            transition: opacity 0.3s ease;
-        }
-
-        .sidebar.collapsed .nav-section-title {
-            opacity: 0;
-            height: 0;
-            margin: 0;
-            padding: 0;
-        }
-
-        /* Main Content */
-        .main-content {
-            margin-left: 280px;
-            padding: 30px;
-            transition: all 0.4s ease;
-            min-height: 100vh;
-            position: relative;
-            z-index: 10;
-        }
-
-        .main-content.expanded {
-            margin-left: 100px;
-        }
-
-        /* Scrollbar Style */
-        .sidebar::-webkit-scrollbar {
-            width: 6px;
-        }
-
-        .sidebar::-webkit-scrollbar-track {
-            background: rgba(78, 172, 155, 0.1);
-        }
-
-        .sidebar::-webkit-scrollbar-thumb {
-            background: #4eac9b;
-            border-radius: 3px;
-        }
-
-        .sidebar::-webkit-scrollbar-thumb:hover {
-            background: #2d8f7f;
-        }
-
-        /* Card Styles */
-        .card {
-            background: linear-gradient(135deg, rgba(78, 172, 155, 0.1) 0%, rgba(45, 90, 90, 0.15) 100%) !important;
-            border: 2px solid #4eac9b !important;
-            border-radius: 15px;
-        }
-
-        .card-header {
-            background: linear-gradient(135deg, #4eac9b 0%, #2d8f7f 100%) !important;
-            border: none !important;
-        }
-
-        .card-body {
-            background: rgba(15, 38, 38, 0.5) !important;
-        }
-
-        /* Device Cards */
-        .device-card {
-            background: linear-gradient(135deg, rgba(78, 172, 155, 0.15) 0%, rgba(45, 90, 90, 0.2) 100%) !important;
-            border: 2px solid #666 !important;
-            border-radius: 15px;
-            transition: all 0.3s ease;
-        }
-
-        .device-card.device-on {
-            border-color: #4eac9b !important;
-            box-shadow: 0 0 20px rgba(78, 172, 155, 0.3);
-        }
-
-        .device-card.device-off {
-            border-color: #666 !important;
-            opacity: 0.8;
-        }
-
-        .device-icon {
-            font-size: 3rem;
-            color: #666;
-            transition: all 0.3s ease;
-            margin-bottom: 15px;
-        }
-
-        .device-card.device-on .device-icon {
-            color: #4eac9b;
-            filter: drop-shadow(0 0 10px rgba(78, 172, 155, 0.5));
-        }
-
-        .device-card .card-title {
-            color: white;
-            font-weight: 600;
-        }
-
-        .device-card .form-check-label {
-            color: white;
-            cursor: pointer;
-        }
-
-        .device-card small {
-            color: #b0c4be;
-        }
-
-        /* Table Styles */
-        .table {
-            color: white;
-        }
-
-        .table thead th {
-            color: #4eac9b;
-            border-bottom: 2px solid rgba(78, 172, 155, 0.3);
-            font-weight: 600;
-        }
-
-        .table tbody tr {
-            border-bottom: 1px solid rgba(78, 172, 155, 0.2);
-            transition: all 0.2s ease;
-        }
-
-        .table tbody tr:hover {
-            background: rgba(78, 172, 155, 0.1);
-        }
-
-        .table tbody td {
-            color: #b0c4be;
-            vertical-align: middle;
-        }
-
-        /* Badge Styles */
-        .status-badge {
-            background: linear-gradient(135deg, #4eac9b 0%, #2d8f7f 100%) !important;
-            color: white !important;
-        }
-
-        /* Pagination */
-        .pagination {
-            margin-top: 20px;
-        }
-
-        .page-link {
-            background: rgba(78, 172, 155, 0.1);
-            color: #4eac9b;
-            border: 1px solid #4eac9b;
-            transition: all 0.3s ease;
-        }
-
-        .page-link:hover {
-            background: #4eac9b;
-            color: white;
-        }
-
-        .page-link.active {
-            background: #4eac9b;
-            border-color: #4eac9b;
-            color: white;
-        }
-
-        /* Alert Styles */
-        .alert {
-            border-radius: 12px;
-            border: 1px solid;
-        }
-
-        .alert-success {
-            background: rgba(78, 172, 155, 0.15) !important;
-            border-color: rgba(78, 172, 155, 0.5) !important;
-            color: #4eac9b !important;
-        }
-
-        .alert-danger {
-            background: rgba(255, 107, 107, 0.15) !important;
-            border-color: rgba(255, 107, 107, 0.5) !important;
-            color: #ff9999 !important;
-        }
-
-        .btn-close {
-            filter: invert(1) brightness(1.2);
-        }
-
-        /* Responsive */
-        @media (max-width: 768px) {
-            .sidebar {
-                width: 100px;
-            }
-
-            .main-content {
-                margin-left: 100px;
-            }
-
-            .logo-text,
-            .nav-text,
-            .nav-section-title {
-                opacity: 0;
-                display: none;
-            }
-        }
-    </style>
-</head>
-<body>
+<?= $this->section('content') ?>
     <!-- Animated background -->
     <div class="bg-elements">
         <div class="water-bubble" style="width: 300px; height: 300px; top: 10%; left: 5%; animation-delay: 0s;"></div>
@@ -448,294 +18,529 @@
         <div class="bubble" style="width: 45px; height: 45px; left: 35%; animation-duration: 10s; animation-delay: 5s;"></div>
     </div>
 
-    <!-- Sidebar Navigation -->
-    <div class="sidebar" id="sidebar">
-        <div class="sidebar-header">
-            <div class="sidebar-logo">
-                <svg class="logo-svg" viewBox="0 0 540 220" xmlns="http://www.w3.org/2000/svg">
-                    <defs>
-                        <linearGradient id="logoGrad" x1="0%" y1="0%" x2="100%" y2="100%">
-                            <stop offset="0%" style="stop-color:#4eac9b;stop-opacity:1" />
-                            <stop offset="100%" style="stop-color:#2d8f7f;stop-opacity:1" />
-                        </linearGradient>
-                    </defs>
-                    <circle cx="110" cy="110" r="100" fill="none" stroke="url(#logoGrad)" stroke-width="12" opacity="0.9"/>
-                    <path d="M 50 130 Q 70 120 90 130 T 130 130" fill="none" stroke="url(#logoGrad)" stroke-width="3" opacity="0.7"/>
-                    <path d="M 40 145 Q 60 135 80 145 T 120 145 T 160 145" fill="none" stroke="url(#logoGrad)" stroke-width="2" opacity="0.5"/>
-                    <polyline points="70,110 85,100 95,125 105,95 115,115 130,110 145,100 155,125" 
-                              fill="none" stroke="#ffd700" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" opacity="0.95"/>
-                </svg>
-                <span class="logo-text">AquaSense</span>
-            </div>
-            <button class="toggle-btn" id="toggleBtn" title="Toggle Sidebar">
-                <i class="fas fa-chevron-left"></i>
-            </button>
-        </div>
-
-         <!-- Navigation Menu -->
-        <ul class="nav-menu">
-            <li class="nav-section-title">Main</li>
-            
-            <li class="nav-item">
-                <a href="<?= base_url('dashboard') ?>" class="nav-link <?= (current_url() == base_url('dashboard') || strpos(current_url(), 'dashboard') !== false && strpos(current_url(), 'dashboard/') === false) ? 'active' : '' ?>">
-                    <i class="fas fa-home nav-icon"></i>
-                    <span class="nav-text">Dashboard</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="<?= base_url('dashboard/sensor-data') ?>" class="nav-link <?= (strpos(current_url(), 'sensor-data') !== false) ? 'active' : '' ?>">
-                    <i class="fas fa-chart-line nav-icon"></i>
-                    <span class="nav-text">Sensor Data</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="<?= base_url('dashboard/alerts') ?>" class="nav-link <?= (strpos(current_url(), 'alerts') !== false) ? 'active' : '' ?>">
-                    <i class="fas fa-bell nav-icon"></i>
-                    <span class="nav-text">Alerts</span>
-                    <?php if (isset($unreadAlerts) && $unreadAlerts > 0): ?>
-                        <span class="badge bg-danger rounded-pill"><?= $unreadAlerts ?></span>
-                    <?php endif; ?>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="<?= base_url('dashboard/devices') ?>" class="nav-link <?= (strpos(current_url(), 'devices') !== false || strpos(current_url(), 'devices') !== false) ? 'active' : '' ?>">
-                    <i class="fas fa-cogs nav-icon"></i>
-                    <span class="nav-text">Device Control</span>
-                </a>
-            </li>
-
-            <li class="nav-item">
-                <a href="<?= base_url('dashboard/settings') ?>" class="nav-link <?= (strpos(current_url(), 'settings') !== false) ? 'active' : '' ?>">
-                    <i class="fas fa-sliders-h nav-icon"></i>
-                    <span class="nav-text">Settings</span>
-                </a>
-            </li>
-
-         
-
-            <li class="nav-section-title">Account</li>
-
-            <li class="nav-item">
-                <a href="<?= base_url('logout') ?>" class="nav-link logout-link">
-                    <i class="fas fa-sign-out-alt nav-icon"></i>
-                    <span class="nav-text">Logout</span>
-                </a>
-            </li>
-        </ul>
-
-    </div>
-
-    <!-- Main Content -->
-    <div class="main-content" id="mainContent">
-        <div class="row mb-4">
-            <!-- Device Control -->
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-cogs me-2" style="color: #ffd700;"></i>
-                        <span style="color: white; font-weight: 600;">Device Control</span>
-                    </div>
-                    <div class="card-body">
-                        <div class="row">
-                            <!-- Oxygenator -->
-                            <div class="col-md-6 mb-3">
-                                <div class="card device-card h-100 <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'device-on' : 'device-off' ?>">
-                                    <div class="card-body text-center py-4">
-                                        <i class="fas fa-wind device-icon"></i>
-                                        <h5 class="card-title mb-3">Oxygenator</h5>
-                                        <div class="d-flex justify-content-center align-items-center mb-3">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       id="oxySwitch" <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
-                                                       onchange="controlDevice('oxygenator', this.checked ? 'on' : 'off')">
-                                                <label class="form-check-label ms-2 fw-medium" for="oxySwitch">
-                                                    <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'ON' : 'OFF' ?>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <?php if ($currentStatus['oxygenator']['last_updated']): ?>
-                                            <small>
-                                                Last updated: <?= date('H:i', strtotime($currentStatus['oxygenator']['last_updated'])) ?>
-                                            </small>
-                                        <?php endif; ?>
-                                    </div>
+    <div class="row mb-4">
+        <!-- Auto Mode Control -->
+        <div class="col-12 mb-4">
+            <div class="card">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-robot me-2" style="color: #ffd700;"></i>
+                    <span style="color: white; font-weight: 600;">Auto Mode Control</span>
+                </div>
+                <div class="card-body">
+                    <div class="row justify-content-center">
+                        <div class="col-md-6 col-lg-4">
+                            <div class="d-flex justify-content-between align-items-center p-4 border border-secondary rounded" style="background: rgba(78, 172, 155, 0.1);">
+                                <div>
+                                    <h5 class="mb-1 fw-bold" style="color: #66CFC4;">Auto Mode</h5>
+                                    <small style="color: #b0c4be;">Automatically control all devices based on sensor readings</small>
                                 </div>
-                            </div>
-
-                            <!-- Water Pump -->
-                            <div class="col-md-6 mb-3">
-                                <div class="card device-card h-100 <?= $currentStatus['water_pump']['state'] == 'ON' ? 'device-on' : 'device-off' ?>">
-                                    <div class="card-body text-center py-4">
-                                        <i class="fas fa-tint device-icon"></i>
-                                        <h5 class="card-title mb-3">Water Pump</h5>
-                                        <div class="d-flex justify-content-center align-items-center mb-3">
-                                            <div class="form-check form-switch">
-                                                <input class="form-check-input" type="checkbox" 
-                                                       id="pumpSwitch" <?= $currentStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
-                                                       onchange="controlDevice('water_pump', this.checked ? 'on' : 'off')">
-                                                <label class="form-check-label ms-2 fw-medium" for="pumpSwitch">
-                                                    <?= $currentStatus['water_pump']['state'] == 'ON' ? 'ON' : 'OFF' ?>
-                                                </label>
-                                            </div>
-                                        </div>
-                                        <?php if ($currentStatus['water_pump']['last_updated']): ?>
-                                            <small>
-                                                Last updated: <?= date('H:i', strtotime($currentStatus['water_pump']['last_updated'])) ?>
-                                            </small>
-                                        <?php endif; ?>
-                                    </div>
+                                <div class="form-check form-switch">
+                                    <input class="form-check-input" type="checkbox" 
+                                           id="autoModeSwitch" <?= (isset($settings) && (($settings['oxygenator_auto'] ?? 0) || ($settings['pump_auto'] ?? 0))) ? 'checked' : '' ?>
+                                           data-type="auto-mode">
+                                    <label class="form-check-label ms-2 fw-medium" for="autoModeSwitch" id="autoModeLabel" style="color: white;">
+                                        <?= (isset($settings) && (($settings['oxygenator_auto'] ?? 0) || ($settings['pump_auto'] ?? 0))) ? 'ON' : 'OFF' ?>
+                                    </label>
                                 </div>
                             </div>
                         </div>
                     </div>
                 </div>
             </div>
+        </div>
 
-            <!-- Device History -->
-            <div class="col-lg-6 mb-4">
-                <div class="card h-100">
-                    <div class="card-header d-flex align-items-center">
-                        <i class="fas fa-history me-2" style="color: #ffd700;"></i>
-                        <span style="color: white; font-weight: 600;">Device History</span>
+        <!-- Device Control -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-cogs me-2" style="color: #ffd700;"></i>
+                    <span style="color: white; font-weight: 600;">Device Control</span>
+                </div>
+                <div class="card-body">
+                    <?php 
+                    $autoModeEnabled = isset($settings) && (($settings['oxygenator_auto'] ?? 0) || ($settings['pump_auto'] ?? 0));
+                    if ($autoModeEnabled): 
+                    ?>
+                    <div class="alert alert-info mb-3" role="alert">
+                        <i class="fas fa-info-circle me-2"></i>
+                        <strong>Auto Mode Active:</strong> Manual controls will work, but may be overridden by automatic mode based on sensor readings.
                     </div>
-                    <div class="card-body">
-                        <?php if (empty($deviceHistory)): ?>
-                            <div class="text-center py-5">
-                                <i class="fas fa-history fa-3x mb-3" style="color: #4eac9b; opacity: 0.5;"></i>
-                                <p style="color: #b0c4be;">No device history available</p>
+                    <?php endif; ?>
+                    <div class="row">
+                        <!-- Oxygenator -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card device-card h-100 <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'device-on' : 'device-off' ?>" id="oxyCard">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-wind device-icon"></i>
+                                    <h5 class="card-title mb-3">Oxygenator</h5>
+                                    <?php if (isset($settings) && ($settings['oxygenator_auto'] ?? 0)): ?>
+                                        <span class="badge bg-info mb-2">
+                                            <i class="fas fa-robot me-1"></i>Auto Mode
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Toggle Switch for Oxygenator -->
+                                    <div class="d-flex justify-content-center align-items-center mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="oxygenatorSwitch" 
+                                                   data-device="oxygenator"
+                                                   <?= $currentStatus['oxygenator']['state'] == 'ON' ? 'checked' : '' ?>
+                                                   style="width: 3em; height: 1.5em;">
+                                            <label class="form-check-label ms-2 fw-medium" for="oxygenatorSwitch" id="oxygenatorLabel" style="color: white;">
+                                                <?= $currentStatus['oxygenator']['state'] ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <?php if ($currentStatus['oxygenator']['last_updated']): ?>
+                                        <small class="d-block">
+                                            Last updated: <?= date('H:i', strtotime($currentStatus['oxygenator']['last_updated'])) ?>
+                                        </small>
+                                    <?php endif; ?>
+                                    <?php if ($currentStatus['oxygenator']['triggered_by']): ?>
+                                        <small class="d-block text-muted">
+                                            Triggered by: <?= ucfirst($currentStatus['oxygenator']['triggered_by']) ?>
+                                        </small>
+                                    <?php endif; ?>
+                                </div>
                             </div>
-                        <?php else: ?>
-                            <div class="table-responsive">
-                                <table class="table table-hover">
-                                    <thead>
+                        </div>
+
+                        <!-- Water Pump -->
+                        <div class="col-md-6 mb-3">
+                            <div class="card device-card h-100 <?= $currentStatus['water_pump']['state'] == 'ON' ? 'device-on' : 'device-off' ?>" id="pumpCard">
+                                <div class="card-body text-center py-4">
+                                    <i class="fas fa-tint device-icon"></i>
+                                    <h5 class="card-title mb-3">Water Pump</h5>
+                                    <?php if (isset($settings) && ($settings['pump_auto'] ?? 0)): ?>
+                                        <span class="badge bg-info mb-2">
+                                            <i class="fas fa-robot me-1"></i>Auto Mode
+                                        </span>
+                                    <?php endif; ?>
+                                    
+                                    <!-- Toggle Switch for Water Pump -->
+                                    <div class="d-flex justify-content-center align-items-center mb-3">
+                                        <div class="form-check form-switch">
+                                            <input class="form-check-input" type="checkbox" 
+                                                   id="waterPumpSwitch" 
+                                                   data-device="water_pump"
+                                                   <?= $currentStatus['water_pump']['state'] == 'ON' ? 'checked' : '' ?>
+                                                   style="width: 3em; height: 1.5em;">
+                                            <label class="form-check-label ms-2 fw-medium" for="waterPumpSwitch" id="waterPumpLabel" style="color: white;">
+                                                <?= $currentStatus['water_pump']['state'] ?>
+                                            </label>
+                                        </div>
+                                    </div>
+                                    
+                                    <?php if ($currentStatus['water_pump']['last_updated']): ?>
+                                        <small class="d-block">
+                                            Last updated: <?= date('H:i', strtotime($currentStatus['water_pump']['last_updated'])) ?>
+                                        </small>
+                                    <?php endif; ?>
+                                    <?php if ($currentStatus['water_pump']['triggered_by']): ?>
+                                        <small class="d-block text-muted">
+                                            Triggered by: <?= ucfirst($currentStatus['water_pump']['triggered_by']) ?>
+                                        </small>
+                                    <?php endif; ?>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Device History -->
+        <div class="col-lg-6 mb-4">
+            <div class="card h-100">
+                <div class="card-header d-flex align-items-center">
+                    <i class="fas fa-history me-2" style="color: #ffd700;"></i>
+                    <span style="color: white; font-weight: 600;">Device History</span>
+                </div>
+                <div class="card-body">
+                    <?php if (empty($deviceHistory)): ?>
+                        <div class="text-center py-5">
+                            <i class="fas fa-history fa-3x mb-3" style="color: #4eac9b; opacity: 0.5;"></i>
+                            <p style="color: #b0c4be;">No device history available</p>
+                        </div>
+                    <?php else: ?>
+                        <div class="table-responsive">
+                            <table class="table table-hover">
+                                <thead>
+                                    <tr>
+                                        <th>Time</th>
+                                        <th>Device</th>
+                                        <th>Action</th>
+                                        <th>Triggered By</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    <?php foreach ($deviceHistory as $log): ?>
                                         <tr>
-                                            <th>Time</th>
-                                            <th>Device</th>
-                                            <th>Action</th>
-                                            <th>Triggered By</th>
+                                            <td><?= date('H:i', strtotime($log['created_at'])) ?></td>
+                                            <td><?= ucfirst(str_replace('_', ' ', $log['device_name'])) ?></td>
+                                            <td>
+                                                <span class="badge <?= $log['action'] == 'ON' ? 'status-badge' : 'bg-secondary' ?>">
+                                                    <?= $log['action'] ?>
+                                                </span>
+                                            </td>
+                                            <td><?= ucfirst($log['triggered_by']) ?></td>
                                         </tr>
-                                    </thead>
-                                    <tbody>
-                                        <?php foreach ($deviceHistory as $log): ?>
-                                            <tr>
-                                                <td><?= date('H:i', strtotime($log['created_at'])) ?></td>
-                                                <td><?= ucfirst(str_replace('_', ' ', $log['device_name'])) ?></td>
-                                                <td>
-                                                    <span class="badge <?= $log['action'] == 'ON' ? 'status-badge' : 'bg-secondary' ?>">
-                                                        <?= $log['action'] ?>
-                                                    </span>
-                                                </td>
-                                                <td><?= ucfirst($log['triggered_by']) ?></td>
-                                            </tr>
-                                        <?php endforeach; ?>
-                                    </tbody>
-                                </table>
-                            </div>
-                            
-                            <!-- Pagination -->
-                            <?php if ($pager->getPageCount() > 1): ?>
-                                <nav aria-label="Page navigation" class="mt-3">
-                                    <?= $pager->links() ?>
-                                </nav>
-                            <?php endif; ?>
+                                    <?php endforeach; ?>
+                                </tbody>
+                            </table>
+                        </div>
+                        
+                        <!-- Pagination -->
+                        <?php if (isset($pager) && $pager->getPageCount() > 1): ?>
+                            <nav aria-label="Page navigation" class="mt-3">
+                                <?= $pager->links() ?>
+                            </nav>
                         <?php endif; ?>
-                    </div>
+                    <?php endif; ?>
                 </div>
             </div>
         </div>
     </div>
 
-    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
 
-    <script>
-        // Sidebar Toggle Functionality
-        const sidebar = document.getElementById('sidebar');
-        const mainContent = document.getElementById('mainContent');
-        const toggleBtn = document.getElementById('toggleBtn');
+    <script src="https://code.jquery.com/jquery-3.7.1.min.js"></script>
 
-        toggleBtn.addEventListener('click', function() {
-            sidebar.classList.toggle('collapsed');
-            mainContent.classList.toggle('expanded');
+<script>
+    console.log('Dashboard JS loaded');
+
+    // Initialize device controls after DOM is loaded
+    $(document).ready(function() {
+        console.log('jQuery loaded and ready');
+        
+        // Handle device toggle switch changes
+        $(document).on('change', '.form-check-input[data-device]', function() {
+            const device = $(this).data('device');
+            const isChecked = $(this).is(':checked');
+            const newState = isChecked ? 'on' : 'off';
+            const switchElement = $(this);
+            const labelMap = {
+                oxygenator: '#oxygenatorLabel',
+                water_pump: '#waterPumpLabel'
+            };
+            const label = $(labelMap[device]);
+
             
-            // Change arrow direction
-            const icon = toggleBtn.querySelector('i');
-            if (sidebar.classList.contains('collapsed')) {
-                icon.classList.remove('fa-chevron-left');
-                icon.classList.add('fa-chevron-right');
-            } else {
-                icon.classList.remove('fa-chevron-right');
-                icon.classList.add('fa-chevron-left');
-            }
-        });
+            console.log('Device control triggered:', device, '→', newState);
+            
+            // Disable switch temporarily
+            switchElement.prop('disabled', true);
+            
+            // Store original state for rollback
+            const originalState = !isChecked;
+            
+            // Use csrf_token() function
+            const csrfName = '<?= csrf_token() ?>';
+            const csrfHash = '<?= csrf_hash() ?>';
+            const url = '<?= base_url('dashboard/control-device') ?>';
 
-        // Device control function
-        function controlDevice(device, action) {
-            console.log('Attempting to control: ' + device + ' -> ' + action);
+            console.log('URL:', url);
+            
+            // Show loading state
+            label.html('<span class="spinner-border spinner-border-sm me-1"></span>Processing');
             
             $.ajax({
-                url: '<?= base_url('dashboard/control-device') ?>',
+                url: url,
                 method: 'POST',
+                headers: {
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
                 data: {
                     device: device,
-                    action: action,
-                    csrf_test_name: $('meta[name="csrf-token"]').attr('content')
+                    action: newState,
+                    [csrfName]: csrfHash
                 },
+                dataType: 'json',
                 success: function(response) {
-                    console.log('Server response:', response);
+                    console.log('AJAX Response:', response);
                     
                     if (response.success) {
-                        showAlert('success', response.message);
-                        updateDeviceUI(device, action);
+                        // Success - update label
+                        label.text(newState.toUpperCase());
+                        
+                        // Update card styling
+                        updateDeviceCard(device, newState);
+                        
+                        // Show success message
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('success', response.message);
+                        } else {
+                            console.log('Success:', response.message);
+                        }
+                        
+                        // Refresh device history if needed
+                        setTimeout(() => {
+                            // You can optionally reload the history section
+                            // location.reload(); // Simple refresh for testing
+                        }, 1000);
+                        
                     } else {
-                        showAlert('danger', 'Error: ' + response.message);
+                        // Error - revert switch
+                        console.error('Server error:', response.message);
+                        switchElement.prop('checked', originalState);
+                        label.text(originalState ? 'ON' : 'OFF');
+                        
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('error', response.message);
+                        } else {
+                            alert('Error: ' + response.message);
+                        }
                     }
                 },
                 error: function(xhr, status, error) {
                     console.error('AJAX Error:', error);
-                    showAlert('danger', 'Network error. Check console for details.');
+                    console.error('Status:', status);
+                    console.error('XHR:', xhr);
+                    
+                    // Revert switch on error
+                    switchElement.prop('checked', originalState);
+                    label.text(originalState ? 'ON' : 'OFF');
+                    
+                    let errorMsg = 'Network error. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    } else if (xhr.responseText) {
+                        errorMsg = 'Server error: ' + xhr.responseText;
+                    }
+                    
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('error', errorMsg);
+                    } else {
+                        alert('Error: ' + errorMsg);
+                    }
+                },
+                complete: function() {
+                    // Re-enable switch
+                    switchElement.prop('disabled', false);
                 }
             });
-        }
-
-        function showAlert(type, message) {
-            const alertDiv = document.createElement('div');
-            alertDiv.className = 'alert alert-' + type + ' alert-dismissible fade show position-fixed';
-            alertDiv.style.cssText = 'top: 20px; right: 20px; z-index: 9999; min-width: 300px;';
-            alertDiv.innerHTML = `
-                <strong>${type === 'success' ? 'Success!' : 'Error!'}</strong> ${message}
-                <button type="button" class="btn-close" data-bs-dismiss="alert"></button>
-            `;
+        });
+        
+        // Handle auto mode switch changes - toggle both devices
+        $(document).on('change', '#autoModeSwitch', function() {
+            const enabled = $(this).is(':checked') ? 1 : 0;
+            const switchElement = $(this);
             
-            document.body.appendChild(alertDiv);
+            console.log('Auto mode toggle triggered:', enabled);
             
-            setTimeout(() => {
-                alertDiv.remove();
-            }, 5000);
-        }
+            // Disable switch temporarily
+            switchElement.prop('disabled', true);
+            
+            const csrfToken = $('meta[name="csrf-token"]').attr('content');
+            const url = '<?= base_url('dashboard/toggle-auto-mode') ?>';
 
-        function updateDeviceUI(device, action) {
-            const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
-            const switchElement = document.getElementById(switchId);
-            if (switchElement) {
-                switchElement.checked = action === 'on';
-                switchElement.nextElementSibling.textContent = action.toUpperCase();
+            const csrfName = '<?= csrf_token() ?>';
+            const csrfHash = '<?= csrf_hash() ?>';
+            
+            // Toggle both devices' auto mode
+            $.ajax({
+                url: url,
+                method: 'POST',
+                headers: {
+                    'X-CSRF-TOKEN': csrfToken,
+                    'X-Requested-With': 'XMLHttpRequest'
+                },
+                data: {
+                    enabled: enabled,
+                    toggle_all: true,  // Flag to toggle both devices
+                    [csrfName]: csrfHash
+                },
+                dataType: 'json',
+                success: function(response) {
+                    console.log('Server response:', response);
+                    
+                    if (response.success) {
+                        // Update label text
+                        $('#autoModeLabel').text(enabled ? 'ON' : 'OFF');
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('success', response.message);
+                        } else {
+                            alert('Auto mode ' + (enabled ? 'enabled' : 'disabled') + ' for all devices');
+                        }
+                    } else {
+                        const errorMsg = 'Error: ' + response.message;
+                        if (typeof window.showToast === 'function') {
+                            window.showToast('error', errorMsg);
+                        } else {
+                            alert(errorMsg);
+                        }
+                        // Revert switch state
+                        switchElement.prop('checked', !switchElement.prop('checked'));
+                    }
+                },
+                error: function(xhr, status, error) {
+                    console.error('AJAX Error:', error, xhr);
+                    let errorMsg = 'Network error. Please try again.';
+                    if (xhr.responseJSON && xhr.responseJSON.message) {
+                        errorMsg = xhr.responseJSON.message;
+                    }
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('error', errorMsg);
+                    } else {
+                        alert(errorMsg);
+                    }
+                    // Revert switch state
+                    switchElement.prop('checked', !switchElement.prop('checked'));
+                },
+                complete: function() {
+                    switchElement.prop('disabled', false);
+                }
+            });
+        });
+    });
+    
+    // Update device card styling
+    function updateDeviceCard(device, action) {
+        const cardId = device === 'oxygenator' ? '#oxyCard' : '#pumpCard';
+        const card = $(cardId);
+        
+        if (card.length) {
+            card.removeClass('device-on device-off');
+            card.addClass(action === 'on' ? 'device-on' : 'device-off');
+            
+            // Update icon color
+            const icon = card.find('.device-icon');
+            if (icon.length) {
+                icon.css('color', action === 'on' ? '#4eac9b' : '#666');
+                
+                // Add glow effect
+                if (action === 'on') {
+                    icon.css('filter', 'drop-shadow(0 0 10px rgba(78, 172, 155, 0.5))');
+                } else {
+                    icon.css('filter', 'none');
+                }
             }
-            
-            // Update card styling
-            const cards = document.querySelectorAll('.device-card');
-            cards.forEach(card => {
-                if (card.textContent.includes(device === 'oxygenator' ? 'Oxygenator' : 'Water Pump')) {
-                    card.classList.remove('device-on', 'device-off');
-                    card.classList.add(action === 'on' ? 'device-on' : 'device-off');
-                }
-            });
         }
-    </script>
-</body>
-</html>
-
-<?= $this->include('layout/footer') ?>
+    }
+</script>
+<style>
+    /* Toggle Switch Styling */
+    .form-check-input[type="checkbox"] {
+        width: 3em !important;
+        height: 1.5em !important;
+        border-radius: 1.5em !important;
+        background-color: rgba(102, 102, 102, 0.5) !important;
+        border: 2px solid #666 !important;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        appearance: none;
+        -webkit-appearance: none;
+        -moz-appearance: none;
+    }
+    
+    .form-check-input[type="checkbox"]:checked {
+        background-color: #4eac9b !important;
+        border-color: #4eac9b !important;
+    }
+    
+    .form-check-input[type="checkbox"]:focus {
+        box-shadow: 0 0 0 0.25rem rgba(78, 172, 155, 0.25) !important;
+        border-color: #4eac9b !important;
+    }
+    
+    .form-check-input[type="checkbox"]:hover {
+        border-color: #4eac9b !important;
+    }
+    
+    /* Switch toggle circle */
+    .form-check-input[type="checkbox"]::before {
+        content: '';
+        position: absolute;
+        width: 1.2em;
+        height: 1.2em;
+        border-radius: 50%;
+        background-color: white;
+        top: 50%;
+        left: 0.15em;
+        transform: translateY(-50%);
+        transition: all 0.3s ease;
+        box-shadow: 0 2px 4px rgba(0, 0, 0, 0.2);
+    }
+    
+    .form-check-input[type="checkbox"]:checked::before {
+        left: calc(100% - 1.35em);
+        background-color: white;
+    }
+    
+    .form-check-input[type="checkbox"]:disabled {
+        opacity: 0.6;
+        cursor: not-allowed;
+    }
+    
+    .form-switch .form-check-input {
+        width: 3em !important;
+        height: 1.5em !important;
+        margin-top: 0.125em;
+        vertical-align: top;
+        background-image: none !important;
+        background-position: left center;
+        border-radius: 1.5em !important;
+        transition: background-color 0.3s ease, border-color 0.3s ease;
+    }
+    
+    .form-switch .form-check-input:checked {
+        background-position: right center;
+        background-image: none !important;
+    }
+    
+    .form-check-label {
+        color: white;
+        cursor: pointer;
+        margin-left: 10px;
+        font-weight: 500;
+        min-width: 40px;
+    }
+    
+    /* Device Cards */
+    .device-card {
+        background: linear-gradient(135deg, rgba(78, 172, 155, 0.15) 0%, rgba(45, 90, 90, 0.2) 100%) !important;
+        border: 2px solid #666 !important;
+        border-radius: 15px;
+        transition: all 0.3s ease;
+    }
+    
+    .device-card.device-on {
+        border-color: #4eac9b !important;
+        box-shadow: 0 0 20px rgba(78, 172, 155, 0.3);
+    }
+    
+    .device-card.device-off {
+        border-color: #666 !important;
+        opacity: 0.8;
+    }
+    
+    .device-icon {
+        font-size: 3rem;
+        color: #666;
+        transition: all 0.3s ease;
+        margin-bottom: 15px;
+    }
+    
+    .device-card.device-on .device-icon {
+        color: #4eac9b;
+        filter: drop-shadow(0 0 10px rgba(78, 172, 155, 0.5));
+    }
+    
+    .device-card .card-title {
+        color: white;
+        font-weight: 600;
+    }
+    
+    .device-card small {
+        color: #b0c4be;
+    }
+    
+    /* Status badge */
+    .status-badge {
+        background: linear-gradient(135deg, #4eac9b 0%, #2d8f7f 100%) !important;
+        color: white !important;
+    }
+</style>
+<?= $this->endSection() ?>

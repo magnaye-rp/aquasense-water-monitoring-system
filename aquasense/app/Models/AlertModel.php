@@ -42,6 +42,12 @@ class AlertModel extends Model
         ]);
     }
 
+    public function reset()
+    {
+        $this->builder()->reset();
+        return $this;
+    }
+
     /**
      * Create sensor alert based on readings
      * 
@@ -92,10 +98,7 @@ class AlertModel extends Model
      * 
      * @return int Number of unread alerts
      */
-    public function getUnreadCount()
-    {
-        return $this->where('is_read', 0)->countAllResults();
-    }
+
 
     /**
      * Mark alerts as read
@@ -166,5 +169,12 @@ class AlertModel extends Model
                 'total_pages' => ceil($total / $perPage)
             ]
         ];
+    }
+
+    public function getUnreadCount()
+    {
+        return $this->builder()
+            ->where('is_read', 0)
+            ->countAllResults();
     }
 }

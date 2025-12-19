@@ -13,7 +13,7 @@ class AuthController extends BaseController
     {
         // If user is already logged in, redirect to dashboard
         if (auth()->loggedIn()) {
-            return redirect()->to('/dashboard');
+            return redirect()->to('/');
         }
 
         $data = [
@@ -51,7 +51,7 @@ class AuthController extends BaseController
             return redirect()->back()->withInput()->with('error', $result->reason());
         }
 
-        return redirect()->to('/dashboard')->with('success', 'Login successful!');
+        return redirect()->to('/');
     }
 
     public function registerView()

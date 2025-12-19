@@ -73,20 +73,32 @@ $routes->group('api', function($routes) {
 
 // Dashboard routes (protected - requires login)
 $routes->group('dashboard', ['filter' => 'session'], function($routes) {
-    $routes->get('/', [DashboardController::class, 'index']);
+    // Main dashboard route - explicitly handle both with and without trailing slash
+    $routes->get('/', [DashboardController::class, 'main']);
+    $routes->get('main', [DashboardController::class, 'main']);
+    
+    // Prevent auto-routing to index() by explicitly redirecting
+    // This ensures /dashboard always goes to main()
     $routes->get('sensor-data', [DashboardController::class, 'sensorData']);
+    $routes->get('get-chart-data', [DashboardController::class, 'getChartData']);
+    $routes->get('get-current-readings', [DashboardController::class, 'getCurrentReadings']);
     $routes->get('alerts', [DashboardController::class, 'alerts']);
     $routes->get('devices', [DashboardController::class, 'devices']);
     $routes->get('settings', [DashboardController::class, 'settings']);
+
+    // Fix these routes to use DashboardController
+    $routes->get('delete-alert/(:num)', [DashboardController::class, 'deleteAlert']);
+    $routes->post('delete-old-alerts', [DashboardController::class, 'deleteOldAlerts']);
+    $routes->post('clear-all-alerts', [DashboardController::class, 'clearAllAlerts']);
+    $routes->post('toggle-auto-mode', 'DashboardController::toggleAutoMode');
     
     // AJAX endpoints for dashboard
     $routes->post('update-settings', [DashboardController::class, 'updateSettings']);
     $routes->post('control-device', [DashboardController::class, 'controlDevice']);
+    $routes->post('toggle-auto-mode', [DashboardController::class, 'toggleAutoMode']);
     $routes->get('get-current-data', [DashboardController::class, 'getCurrentData']);
-    $routes->delete('delete-alert/(:num)', [DashboardController::class, 'deleteAlert']);
     
     // Test routes
-    $routes->post('test-control', [DashboardController::class, 'testControl']);
     $routes->get('test-dashboard', [DashboardController::class, 'test']);
     $routes->get('test-ajax', [DashboardController::class, 'testAjax']);
 });

@@ -8,7 +8,6 @@ use App\Models\DeviceLogModel;
 use App\Models\SystemSettingsModel;
 use CodeIgniter\API\ResponseTrait;
 use App\Models\DeviceCommandModel;
-use App\Services\AutoModeService;
 
 class ApiController extends BaseController
 {
@@ -19,7 +18,6 @@ class ApiController extends BaseController
     protected $deviceLogModel;
     protected $systemSettingsModel;
     protected $deviceCommandModel;
-    protected $autoModeService;
 
     // API Configuration
     protected $apiKeys = [
@@ -34,190 +32,138 @@ class ApiController extends BaseController
         $this->deviceLogModel = new DeviceLogModel();
         $this->systemSettingsModel = new SystemSettingsModel();
         $this->deviceCommandModel = new DeviceCommandModel();
-        $this->autoModeService = new AutoModeService();
     }
 
 
     public function receiveData()
-    {
-        $apiKey = $this->request->getHeaderLine('X-API-Key') ?? 
-                $this->request->getPost('api_key');
+{
+    // ===============================
+    // API KEY VALIDATION
+    // ===============================
+    $apiKey = $this->request->getHeaderLine('X-API-Key')
+           ?? $this->request->getPost('api_key');
 
-        $commandCheck = $this->request->getPost('command_check') ?? 0;
-
-        // Log for debugging
-        log_message('debug', '=== API REQUEST START ===');
-        log_message('debug', 'API Key: ' . ($apiKey ?? 'none'));
-
-        // Validate API key FIRST
-        if (!$this->validateApiKey($apiKey)) {
-            log_message('debug', 'API Key validation failed');
-            return $this->failUnauthorized('Invalid API key');
-        }
-
-        // Get sensor data
-        $temperature = $this->request->getPost('temperature');
-        $turbidity = $this->request->getPost('turbidity');
-        $ph = $this->request->getPost('ph');
-        $autoMode = $this->request->getPost('auto_mode');
-        $deviceId = $this->request->getPost('device_id') ?? $this->apiKeys[$apiKey] ?? 'unknown';
-        $oxygenatorState = $this->request->getPost('oxygenator_state') ?? 0;
-        $waterPumpState = $this->request->getPost('water_pump_state') ?? 0;
-
-        log_message('debug', "Device ID: {$deviceId}");
-        log_message('debug', "Sensor Data - Temp: {$temperature}, Turb: {$turbidity}, pH: {$ph}");
-        log_message('debug', "Current States - Oxygenator: {$oxygenatorState}, Water Pump: {$waterPumpState}");
-        log_message('debug', "Auto Mode: {$autoMode}");
-
-        // Prepare sensor data array
-        $sensorData = [
-            'temperature' => (float)$temperature,
-            'ph_level' => (float)$ph,
-            'turbidity' => (float)$turbidity,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-
-        // Now handle the command check logic
-        if ($commandCheck == 1) {
-            // Just check for commands, don't save sensor data
-            log_message('debug', 'Command check request from device - skipping sensor data save');
-        } else {
-            // Full sensor data - save to database
-            try {
-                $this->sensorReadingModel->insert($sensorData);
-                log_message('debug', '✅ Sensor data saved to database. ID: ' . $this->sensorReadingModel->getInsertID());
-
-                // Check for alerts
-                $thresholds = $this->systemSettingsModel->getThresholds();
-                $this->alertModel->createSensorAlert($sensorData, $thresholds);
-                
-            } catch (\Exception $e) {
-                log_message('error', '❌ Failed to save sensor data: ' . $e->getMessage());
-            }
-        }
-
-        // AUTO MODE PROCESSING
-        $autoCommands = [];
-        $autoModeEnabled = ($autoMode == '1' || $autoMode == 1);
-        
-        // Only process auto mode if we have sensor data (not command check only)
-        if ($autoModeEnabled && $commandCheck != 1) {
-            try {
-                log_message('debug', '🚀 Processing AUTO MODE...');
-                $autoCommands = $this->autoModeService->processAutoMode($sensorData, $deviceId);
-                log_message('debug', '✅ Auto mode processed. Commands generated: ' . count($autoCommands));
-                
-                // Log auto commands to device logs
-                foreach ($autoCommands as $deviceName => $command) {
-                    $this->deviceLogModel->logDeviceAction($deviceName, $command, 'auto');
-                    log_message('debug', "📝 Logged auto command: {$deviceName} => {$command}");
-                }
-            } catch (\Exception $e) {
-                log_message('error', '❌ Auto mode processing failed: ' . $e->getMessage());
-            }
-        }
-
-        if (!empty($autoCommands)) {
-            foreach ($autoCommands as $deviceName => $command) {
-                if ($deviceName === 'oxygenator') {
-                    $commands['oxygenator'] = ($command === 'ON') ? 1 : 0;
-                }
-                if ($deviceName === 'water_pump') {
-                    $commands['water_pump'] = ($command === 'ON') ? 1 : 0;
-                }
-            }
-            
-            // Also add these as pending commands for persistence
-            foreach ($autoCommands as $deviceName => $command) {
-                $this->deviceCommandModel->addCommand(
-                    $deviceName, 
-                    strtoupper($command), 
-                    $deviceId,
-                    'auto' // Source
-                );
-            }
-        }
-
-        // Get pending commands (including auto-generated ones)
-        try {
-            $pendingCommands = $this->deviceCommandModel->getPendingCommands($deviceId);
-            log_message('debug', 'Pending commands found: ' . count($pendingCommands));
-        } catch (\Exception $e) {
-            log_message('error', 'Error getting pending commands: ' . $e->getMessage());
-            $pendingCommands = [];
-        }
-
-        // Prepare response commands
-        $commands = [
-            'oxygenator' => 0,  // Default to OFF
-            'water_pump' => 0,  // Default to OFF
-            'mode' => $autoModeEnabled ? 'auto' : 'manual'
-        ];
-
-        // Process each pending command
-        foreach ($pendingCommands as $cmd) {
-            $deviceName = $cmd['device_name'] ?? '';
-            $command = strtoupper($cmd['command'] ?? '');
-            
-            log_message('debug', "Processing: {$deviceName} => {$command} (ID: {$cmd['id']})");
-            
-            if ($deviceName === 'oxygenator') {
-                $commands['oxygenator'] = ($command === 'ON') ? 1 : 0;
-                log_message('debug', "Set oxygenator to: {$commands['oxygenator']}");
-            }
-            
-            if ($deviceName === 'water_pump') {
-                $commands['water_pump'] = ($command === 'ON') ? 1 : 0;
-                log_message('debug', "Set water_pump to: {$commands['water_pump']}");
-            }
-            
-            // Mark as executed
-            try {
-                $this->deviceCommandModel->markExecuted($cmd['id']);
-                log_message('debug', "✅ Command {$cmd['id']} marked as executed");
-            } catch (\Exception $e) {
-                log_message('error', "Failed to mark command as executed: " . $e->getMessage());
-            }
-        }
-
-        // If no pending commands, get latest state from database
-        if (empty($pendingCommands)) {
-            try {
-                $oxygenatorCommand = $this->deviceCommandModel->getCurrentCommand('oxygenator', $deviceId);
-                $waterPumpCommand = $this->deviceCommandModel->getCurrentCommand('water_pump', $deviceId);
-                
-                if ($oxygenatorCommand) {
-                    $commands['oxygenator'] = (strtoupper($oxygenatorCommand['command']) === 'ON') ? 1 : 0;
-                    log_message('debug', "Using latest oxygenator command: {$commands['oxygenator']}");
-                }
-                
-                if ($waterPumpCommand) {
-                    $commands['water_pump'] = (strtoupper($waterPumpCommand['command']) === 'ON') ? 1 : 0;
-                    log_message('debug', "Using latest water pump command: {$commands['water_pump']}");
-                }
-            } catch (\Exception $e) {
-                log_message('error', 'Error getting latest commands: ' . $e->getMessage());
-            }
-        }
-
-        // Update current device states in database (if you have a devices table)
-        $this->updateDeviceStates($deviceId, $oxygenatorState, $waterPumpState);
-
-        log_message('debug', 'Final commands to send: ' . print_r($commands, true));
-        log_message('debug', 'Auto commands generated: ' . print_r($autoCommands, true));
-        log_message('debug', '=== API REQUEST END ===');
-
-        return $this->respond([
-            'status' => 'success',
-            'message' => 'Data received successfully',
-            'timestamp' => date('Y-m-d H:i:s'),
-            'commands' => $commands,
-            'auto_mode' => $autoModeEnabled ? 'enabled' : 'disabled',
-            'auto_commands_generated' => $autoCommands,
-            'pending_processed' => count($pendingCommands),
-            'device_id' => $deviceId
-        ]);
+    if (!$this->validateApiKey($apiKey)) {
+        return $this->failUnauthorized('Invalid API key');
     }
+
+    $deviceId = $this->apiKeys[$apiKey] ?? 'UNKNOWN_DEVICE';
+
+    // ===============================
+    // REQUEST DATA
+    // ===============================
+    $commandCheck = (int) ($this->request->getPost('command_check') ?? 0);
+
+    $temperature = $this->request->getPost('temperature');
+    $ph          = $this->request->getPost('ph');
+    $turbidity   = $this->request->getPost('turbidity');
+
+    $oxygenatorState = (int) ($this->request->getPost('oxygenator_state') ?? 0);
+    $waterPumpState  = (int) ($this->request->getPost('water_pump_state') ?? 0);
+
+    log_message('debug', "📡 Device: {$deviceId} | CommandCheck: {$commandCheck}");
+
+    // ===============================
+    // SAVE SENSOR DATA (IF NOT COMMAND CHECK)
+    // ===============================
+    if ($commandCheck !== 1) {
+        try {
+            $sensorData = [
+                'temperature' => (float) $temperature,
+                'ph_level'    => (float) $ph,
+                'turbidity'   => (float) $turbidity,
+                'created_at'  => date('Y-m-d H:i:s')
+            ];
+
+            $this->sensorReadingModel->insert($sensorData);
+
+            // Alerts (threshold-based)
+            $thresholds = $this->systemSettingsModel->getThresholds();
+            $this->alertModel->createSensorAlert($sensorData, $thresholds);
+
+            log_message('debug', '✅ Sensor data saved');
+
+        } catch (\Exception $e) {
+            log_message('error', '❌ Sensor save failed: ' . $e->getMessage());
+        }
+    }
+
+    // ===============================
+    // DEFAULT RESPONSE COMMANDS
+    // ===============================
+    $commands = [
+        'oxygenator' => 0,
+        'water_pump' => 0,
+        'mode'       => 'manual'
+    ];
+
+    // ===============================
+    // GET PENDING COMMANDS
+    // ===============================
+    try {
+        $pendingCommands = $this->deviceCommandModel->getPendingCommands($deviceId);
+    } catch (\Exception $e) {
+        log_message('error', '❌ Fetch commands failed: ' . $e->getMessage());
+        $pendingCommands = [];
+    }
+
+    // ===============================
+    // APPLY PENDING COMMANDS
+    // ===============================
+    foreach ($pendingCommands as $cmd) {
+        $device  = $cmd['device_name'] ?? '';
+        $command = strtoupper($cmd['command'] ?? '');
+
+        if ($device === 'oxygenator') {
+            $commands['oxygenator'] = ($command === 'ON') ? 1 : 0;
+        }
+
+        if ($device === 'water_pump') {
+            $commands['water_pump'] = ($command === 'ON') ? 1 : 0;
+        }
+
+        // Mark command as executed
+        try {
+            $this->deviceCommandModel->markExecuted($cmd['id']);
+        } catch (\Exception $e) {
+            log_message('error', '❌ Command mark failed: ' . $e->getMessage());
+        }
+    }
+
+    // ===============================
+    // FALLBACK TO LAST KNOWN STATE
+    // ===============================
+    if (empty($pendingCommands)) {
+        $lastOxy  = $this->deviceCommandModel->getCurrentCommand('oxygenator', $deviceId);
+        $lastPump = $this->deviceCommandModel->getCurrentCommand('water_pump', $deviceId);
+
+        if ($lastOxy) {
+            $commands['oxygenator'] = strtoupper($lastOxy['command']) === 'ON' ? 1 : 0;
+        }
+
+        if ($lastPump) {
+            $commands['water_pump'] = strtoupper($lastPump['command']) === 'ON' ? 1 : 0;
+        }
+    }
+
+    // ===============================
+    // UPDATE DEVICE HEARTBEAT
+    // ===============================
+    $this->updateDeviceStates($deviceId, $oxygenatorState, $waterPumpState);
+
+    log_message('debug', '➡️ Commands sent: ' . json_encode($commands));
+
+    // ===============================
+    // JSON RESPONSE (IMPORTANT)
+    // ===============================
+    return $this->respond([
+        'status'     => 'success',
+        'device_id'  => $deviceId,
+        'commands'   => $commands,
+        'timestamp'  => date('Y-m-d H:i:s')
+    ]);
+}
+
 
     public function getCommands()
     {
@@ -384,85 +330,6 @@ class ApiController extends BaseController
         }
     }
 
-    /**
-     * Test fuzzy logic calculation
-     */
-    public function testFuzzyLogic()
-    {
-        if (!auth()->loggedIn()) {
-            return $this->failUnauthorized('Authentication required');
-        }
-
-        $temp = $this->request->getPost('temperature') ?? 25.0;
-        $ph = $this->request->getPost('ph') ?? 7.0;
-        $turbidity = $this->request->getPost('turbidity') ?? 30.0;
-
-        $sensorData = [
-            'temperature' => (float)$temp,
-            'ph_level' => (float)$ph,
-            'turbidity' => (float)$turbidity
-        ];
-
-        try {
-            // This would require exposing some protected methods or creating a test method
-            $settings = $this->systemSettingsModel->getCurrentSettings();
-            $thresholds = $this->systemSettingsModel->getThresholds();
-            
-            // Create a reflection to access protected methods (for testing)
-            $reflection = new \ReflectionClass($this->autoModeService);
-            
-            $tempScoreMethod = $reflection->getMethod('calculateTemperatureScore');
-            $tempScoreMethod->setAccessible(true);
-            $tempScore = $tempScoreMethod->invoke($this->autoModeService, $temp, $thresholds);
-            
-            $phScoreMethod = $reflection->getMethod('calculatePhScore');
-            $phScoreMethod->setAccessible(true);
-            $phScore = $phScoreMethod->invoke($this->autoModeService, $ph, $thresholds);
-            
-            $turbScoreMethod = $reflection->getMethod('calculateTurbidityScore');
-            $turbScoreMethod->setAccessible(true);
-            $turbScore = $turbScoreMethod->invoke($this->autoModeService, $turbidity, $thresholds);
-            
-            // Evaluate what would happen
-            $oxygenatorScore = ($tempScore * 0.6) + ($phScore * 0.4);
-            $pumpScore = ($turbScore * 0.8);
-            
-            $oxygenatorCommand = $oxygenatorScore >= 70 ? 'ON' : ($oxygenatorScore <= 30 ? 'OFF' : 'NO_CHANGE');
-            $pumpCommand = $pumpScore >= 65 ? 'ON' : ($pumpScore <= 35 ? 'OFF' : 'NO_CHANGE');
-
-            return $this->respond([
-                'status' => 'success',
-                'test_data' => $sensorData,
-                'thresholds' => $thresholds,
-                'scores' => [
-                    'temperature' => $tempScore,
-                    'ph' => $phScore,
-                    'turbidity' => $turbScore,
-                    'oxygenator_total' => $oxygenatorScore,
-                    'water_pump_total' => $pumpScore
-                ],
-                'recommendations' => [
-                    'oxygenator' => $oxygenatorCommand,
-                    'water_pump' => $pumpCommand
-                ],
-                'interpretation' => [
-                    'oxygenator' => [
-                        'ON' => 'Score >= 70',
-                        'OFF' => 'Score <= 30',
-                        'NO_CHANGE' => 'Score between 31-69'
-                    ],
-                    'water_pump' => [
-                        'ON' => 'Score >= 65',
-                        'OFF' => 'Score <= 35',
-                        'NO_CHANGE' => 'Score between 36-64'
-                    ]
-                ]
-            ]);
-            
-        } catch (\Exception $e) {
-            return $this->fail('Fuzzy logic test failed: ' . $e->getMessage(), 500);
-        }
-    }
 
     /**
      * Private helper methods
@@ -502,123 +369,6 @@ class ApiController extends BaseController
         }
     }
 
-    public function test()
-    {
-        $testType = $this->request->getPost('test');
-        
-        $response = [
-            'success' => false,
-            'message' => '',
-            'data' => []
-        ];
-        
-        try {
-            $db = \Config\Database::connect();
-            
-            switch ($testType) {
-                case 'connection':
-                    $response['success'] = (bool)$db->connID;
-                    $response['message'] = $db->connID ? 'Database connected successfully' : 'Database connection failed';
-                    $response['data'] = [
-                        'connected' => (bool)$db->connID,
-                        'database' => $db->database,
-                        'hostname' => $db->hostname
-                    ];
-                    break;
-                    
-                case 'tables':
-                    $tables = $db->listTables();
-                    $response['success'] = in_array('device_commands', $tables);
-                    $response['message'] = 'Found ' . count($tables) . ' tables';
-                    $response['data'] = [
-                        'total_tables' => count($tables),
-                        'tables' => $tables,
-                        'device_commands_exists' => in_array('device_commands', $tables)
-                    ];
-                    break;
-                    
-                case 'insert':
-                    // Test insert
-                    $result = $db->table('device_commands')->insert([
-                        'device_name' => 'oxygenator',
-                        'command' => 'ON',
-                        'status' => 'pending',
-                        'device_id' => 'TEST_' . time(),
-                        'created_at' => date('Y-m-d H:i:s')
-                    ]);
-                    
-                    $response['success'] = (bool)$result;
-                    $response['message'] = $result ? 'Test command inserted successfully' : 'Failed to insert command';
-                    $response['data'] = [
-                        'insert_success' => (bool)$result,
-                        'insert_id' => $db->insertID(),
-                        'test_id' => 'TEST_' . time()
-                    ];
-                    break;
-                    
-                case 'api':
-                    // Simulate what NodeMCU would receive
-                    $pending = $db->table('device_commands')
-                                ->where('status', 'pending')
-                                ->where('device_id', 'NODEMCU_AQUASENSE_001')
-                                ->orWhere('device_id IS NULL')
-                                ->get()
-                                ->getResultArray();
-                    
-                    $commands = [
-                        'oxygenator' => 0,
-                        'water_pump' => 0,
-                        'mode' => 'auto'
-                    ];
-                    
-                    foreach ($pending as $cmd) {
-                        if ($cmd['device_name'] === 'oxygenator') {
-                            $commands['oxygenator'] = ($cmd['command'] === 'ON') ? 1 : 0;
-                        }
-                        if ($cmd['device_name'] === 'water_pump') {
-                            $commands['water_pump'] = ($cmd['command'] === 'ON') ? 1 : 0;
-                        }
-                    }
-                    
-                    $response['success'] = true;
-                    $response['message'] = 'API simulation complete';
-                    $response['data'] = [
-                        'pending_commands' => $pending,
-                        'commands_to_send' => $commands,
-                        'pending_count' => count($pending)
-                    ];
-                    break;
-                    
-                case 'auto_mode':
-                    // Test auto mode service
-                    $sensorData = [
-                        'temperature' => 28.5,
-                        'ph_level' => 7.8,
-                        'turbidity' => 75
-                    ];
-                    
-                    $autoCommands = $this->autoModeService->processAutoMode($sensorData, 'NODEMCU_AQUASENSE_001');
-                    
-                    $response['success'] = true;
-                    $response['message'] = 'Auto mode test complete';
-                    $response['data'] = [
-                        'test_sensor_data' => $sensorData,
-                        'auto_commands_generated' => $autoCommands,
-                        'service_working' => !empty($autoCommands) || true // Always true if no exception
-                    ];
-                    break;
-                    
-                default:
-                    $response['message'] = 'Invalid test type';
-            }
-            
-        } catch (\Exception $e) {
-            $response['message'] = 'Test failed: ' . $e->getMessage();
-            $response['data']['error'] = $e->getMessage();
-        }
-        
-        return $this->respond($response);
-    }
     
     public function testCommand()
     {

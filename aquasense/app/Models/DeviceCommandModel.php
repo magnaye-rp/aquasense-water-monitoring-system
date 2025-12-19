@@ -30,19 +30,36 @@ class DeviceCommandModel extends Model
      * @param string|null $deviceId Device ID (string, not integer)
      * @return int|bool Insert ID or false on failure
      */
+    // DeviceCommandModel.php - Update addCommand method
     public function addCommand($deviceName, $command, $deviceId = null)
     {
-        $data = [
-            'device_name' => $deviceName,
-            'command' => strtoupper($command),
-            'status' => 'pending',
-            'device_id' => $deviceId,
-            'created_at' => date('Y-m-d H:i:s')
-        ];
-        
-        return $this->insert($data) ? $this->getInsertID() : false;
+        try {
+            $data = [
+                'device_name' => $deviceName,
+                'command' => strtoupper($command),
+                'status' => 'pending',
+                'device_id' => $deviceId,
+                'created_at' => date('Y-m-d H:i:s')
+            ];
+            
+            log_message('debug', 'Adding command: ' . print_r($data, true));
+            
+            $result = $this->insert($data);
+            
+            if ($result) {
+                $id = $this->getInsertID();
+                log_message('debug', "Command added with ID: {$id}");
+                return $id;
+            } else {
+                log_message('error', 'Failed to insert command: ' . print_r($this->errors(), true));
+                return false;
+            }
+            
+        } catch (\Exception $e) {
+            log_message('error', 'Exception in addCommand: ' . $e->getMessage());
+            return false;
+        }
     }
-    
     /**
      * Get latest commands for each device
      * 

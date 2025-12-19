@@ -22,7 +22,8 @@ class SystemSettingsModel extends Model
         'ph_good_min',
         'ph_good_max',
         'turbidity_limit',
-        'temperature_range'
+        'temperature_range',
+        'email_alerts',
     ];
 
     protected $useTimestamps = true;
@@ -50,11 +51,10 @@ class SystemSettingsModel extends Model
         $current = $this->first();
         
         if ($current) {
-            $data['updated_at'] = date('Y-m-d H:i:s');
             return $this->update($current['id'], $data);
         }
         
-        return false;
+        return $this->insert($data) !== false;
     }
 
     /**

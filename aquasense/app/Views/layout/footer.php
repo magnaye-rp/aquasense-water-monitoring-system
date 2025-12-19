@@ -1,22 +1,15 @@
-    </div> <!-- Close container-fluid -->
-
-    <!-- Bootstrap JS -->
+    <!-- Common JavaScript libraries - loaded in footer -->
+    <script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
     <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.1.3/dist/js/bootstrap.bundle.min.js"></script>
-    <!-- jQuery -->
-    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
-    
-    <!-- Global JavaScript Functions - IN FOOTER -->
+
+    <!-- Global JavaScript Functions -->
     <script>
-    /* ===============================
-    GLOBAL DEVICE CONTROL FUNCTIONS
-    =============================== */
-    
     // Global controlDevice function - accessible from all pages
     window.controlDevice = function(device, action) {
         console.log('Attempting to control: ' + device + ' -> ' + action);
         
         const csrfToken = $('meta[name="csrf-token"]').attr('content');
-        const url = '/dashboard/control-device';
+        const url = '<?= base_url('dashboard/control-device') ?>';
         
         // Disable switch temporarily
         const switchId = device === 'oxygenator' ? 'oxySwitch' : 'pumpSwitch';
@@ -38,25 +31,42 @@
                 console.log('Server response:', response);
                 
                 if (response.success) {
-                    showToast('success', response.message);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('success', response.message);
+                    } else if (typeof showToast === 'function') {
+                        showToast('success', response.message);
+                    }
                     
                     // Update switch state based on response
                     if (switchElement) {
                         switchElement.checked = action === 'on';
                         switchElement.disabled = false;
                         
-                        // Update label text
-                        const label = switchElement.nextElementSibling;
-                        if (label && label.tagName === 'LABEL') {
+                        // Update label text - try multiple methods
+                        const labelId = device === 'oxygenator' ? 'oxyLabel' : 'pumpLabel';
+                        const label = document.getElementById(labelId);
+                        if (label) {
                             label.textContent = action === 'on' ? 'ON' : 'OFF';
+                        } else {
+                            // Fallback: try nextElementSibling
+                            const labelFallback = switchElement.nextElementSibling;
+                            if (labelFallback && labelFallback.tagName === 'LABEL') {
+                                labelFallback.textContent = action === 'on' ? 'ON' : 'OFF';
+                            }
                         }
                     }
                     
-                    // Update card styling
-                    updateDeviceCard(device, action);
+                    // Update card styling if function exists
+                    if (typeof updateDeviceCard === 'function') {
+                        updateDeviceCard(device, action);
+                    }
                     
                 } else {
-                    showToast('error', 'Error: ' + response.message);
+                    if (typeof window.showToast === 'function') {
+                        window.showToast('error', 'Error: ' + response.message);
+                    } else if (typeof showToast === 'function') {
+                        showToast('error', 'Error: ' + response.message);
+                    }
                     // Revert switch state
                     if (switchElement) {
                         switchElement.checked = !switchElement.checked;
@@ -66,7 +76,11 @@
             },
             error: function(xhr, status, error) {
                 console.error('AJAX Error:', error);
-                showToast('error', 'Network error. Please try again.');
+                if (typeof window.showToast === 'function') {
+                    window.showToast('error', 'Network error. Please try again.');
+                } else if (typeof showToast === 'function') {
+                    showToast('error', 'Network error. Please try again.');
+                }
                 
                 // Revert switch state
                 if (switchElement) {
@@ -148,13 +162,18 @@
         var popoverList = popoverTriggerList.map(function (popoverTriggerEl) {
             return new bootstrap.Popover(popoverTriggerEl);
         });
-        
-        // Check if controlDevice function is available
-        if (typeof controlDevice === 'undefined') {
-            console.warn('controlDevice function not found. Make sure it\'s included in the footer.');
-        }
     });
     </script>
+    
+    <!-- Page-specific scripts -->
+    <?php if (isset($load_datatables) && $load_datatables): ?>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/dataTables.buttons.min.js"></script>
+    <script src="https://cdn.datatables.net/buttons/2.3.6/js/buttons.bootstrap5.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/dataTables.responsive.min.js"></script>
+    <script src="https://cdn.datatables.net/responsive/2.4.1/js/responsive.bootstrap5.min.js"></script>
+    <?php endif; ?>
     
     <?php if (isset($scripts) && !empty($scripts)): ?>
         <?php foreach ($scripts as $script): ?>
